@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `allergen_acknowledged` integer DEFAULT false NOT NULL;

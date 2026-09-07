@@ -1,0 +1,192 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../vendor/shadcn-tailwind-4.13.0.css";
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
+:root {
+  --background: #f2f7f5;
+  --foreground: #18201f;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #123c37;
+  --primary-foreground: #fafafa;
+  --secondary: #e5f2ee;
+  --secondary-foreground: #171717;
+  --muted: #eaf2ef;
+  --muted-foreground: #60716d;
+  --accent: #e5f2ee;
+  --accent-foreground: #171717;
+  --destructive: #e7000b;
+  --border: #d5e4df;
+  --input: #d5e4df;
+  --ring: #ef6a52;
+  --chart-1: #f54900;
+  --chart-2: #009689;
+  --chart-3: #104e64;
+  --chart-4: #ffb900;
+  --chart-5: #fe9a00;
+  --radius: 0.875rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a1a1a1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Avenir Next", Avenir, "Segoe UI", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Avenir Next", Avenir, "Segoe UI", Arial, sans-serif;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: #f4c95d;
+  color: #123c37;
+}
+
+.form-legend {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.choice-card {
+  min-height: 5.25rem;
+  cursor: pointer;
+  border: 1px solid #cbdcd6;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: #ffffff;
+  color: #4d625e;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.choice-card:hover {
+  border-color: #ef6a52;
+  transform: translateY(-1px);
+}
+
+.choice-card-active {
+  border-color: #146f63;
+  background: #e5f2ee;
+  color: #123c37;
+  box-shadow: inset 0 0 0 1px #146f63;
+}
+
+.choice-card span {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.choice-card strong {
+  font-size: 0.95rem;
+}
+
+.choice-card small {
+  font-size: 0.73rem;
+  font-weight: 500;
+  opacity: 0.72;
+}
+
+.meat-card {
+  cursor: pointer;
+  justify-content: center;
+  border: 1px solid #cbdcd6;
+  border-radius: 0.85rem;
+  padding: 0.8rem 0.6rem;
+  background: #ffffff;
+  color: #4d625e;
+  transition: all 160ms ease;
+}
+
+.meat-card:hover {
+  border-color: #ef6a52;
+}
+
+.meat-card-active {
+  border-color: #123c37;
+  background: #123c37;
+  color: #fff;
+  box-shadow: 0 7px 18px rgba(18, 60, 55, 0.2);
+}
+
+.summary-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7f7a;
+}
+
+.summary-value {
+  margin-top: 0.35rem;
+  font-weight: 700;
+  color: #18201f;
+}
