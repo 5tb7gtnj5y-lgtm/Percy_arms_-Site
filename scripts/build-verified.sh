@@ -4,7 +4,10 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "${SITES_ENV_READY:-}" != "1" ]]; then
-  exec "${script_dir}/sites-env.sh" -- "$0" "$@"
+  # GitHub's browser uploader does not preserve executable file modes. Invoke
+  # the environment wrapper through bash so cloud build systems can run it
+  # even when the script is checked out as 0644.
+  exec bash "${script_dir}/sites-env.sh" -- "$0" "$@"
 fi
 
 command -v timeout || {
