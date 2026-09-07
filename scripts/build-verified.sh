@@ -7,7 +7,7 @@ if [[ "${SITES_ENV_READY:-}" != "1" ]]; then
   # GitHub's browser uploader does not preserve executable file modes. Invoke
   # the environment wrapper through bash so cloud build systems can run it
   # even when the script is checked out as 0644.
-  exec bash "${script_dir}/sites-env.sh" -- "$0" "$@"
+  exec bash "${script_dir}/sites-env.sh" -- bash "$0" "$@"
 fi
 
 command -v timeout || {
