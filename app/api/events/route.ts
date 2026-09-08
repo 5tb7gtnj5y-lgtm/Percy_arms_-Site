@@ -1,8 +1,6 @@
-import { env } from "cloudflare:workers";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { communityEvents } from "../../../db/schema";
-import { getChatGPTUser } from "../../chatgpt-auth";
 import { getAdminUser } from "@/lib/admin";
 
 function clean(value: unknown, maxLength: number) {
@@ -36,11 +34,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
-  const runtimeEnv = env as unknown as { ADMIN_EMAIL?: string };
-  const adminEmail = runtimeEnv.ADMIN_EMAIL?.toLowerCase();
-
-  if (!user || !adminEmail || user.email.toLowerCase() !== adminEmail) {
+  const user = await getAdminUser(request);
+  if (!user) {
     return Response.json({ error: "Only the pub admin can post events." }, { status: 403 });
   }
 
@@ -82,7 +77,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getAdminUser();
+  const user = await getAdminUser(request);
   if (!user) {
     return Response.json({ error: "Only the pub admin can delete events." }, { status: 403 });
   }

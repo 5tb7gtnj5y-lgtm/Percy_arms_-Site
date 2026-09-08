@@ -4,8 +4,8 @@ import { getDb } from "@/db";
 import { orders as ordersTable } from "@/db/schema";
 import type { OrderLines, OrderStatus, ServiceType } from "@/lib/order-types";
 
-export async function GET() {
-  const user = await getChatGPTUser();
+export async function GET(request: Request) {
+  const user = await getChatGPTUser(request);
   if (!user) {
     return Response.json({ error: "Sign in to view your orders." }, { status: 401 });
   }

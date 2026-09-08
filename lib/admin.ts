@@ -1,14 +1,15 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { headers } from "next/headers";
+import {
+  isSameOriginAdminRequest,
+  verifyAdminAccess,
+  type AccessEnvironment,
+} from "./cloudflare-access";
 
-export async function getAdminUser() {
-  const user = await getChatGPTUser();
-  const runtimeEnv = env as unknown as { ADMIN_EMAIL?: string };
-  const adminEmail = runtimeEnv.ADMIN_EMAIL?.toLowerCase();
-
-  if (!user || !adminEmail || user.email.toLowerCase() !== adminEmail) {
-    return null;
-  }
-
-  return user;
+export async function getAdminUser(request?: Request) {
+  if (request && !isSameOriginAdminRequest(request)) return null;
+  return verifyAdminAccess(
+    request?.headers ?? await headers(),
+    env as unknown as AccessEnvironment,
+  );
 }

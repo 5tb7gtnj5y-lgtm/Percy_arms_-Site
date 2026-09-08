@@ -344,6 +344,7 @@ export function OrderMenu() {
         <div className="relative min-h-64 overflow-hidden rounded-[1.75rem] bg-[#123c37] text-white shadow-[0_20px_60px_rgba(18,60,55,0.22)]">
           <Image
             src="/sunday-roast.png"
+            unoptimized
             alt="A roast beef Sunday lunch with Yorkshire pudding, roast potatoes and vegetables"
             fill
             priority

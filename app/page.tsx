@@ -1,27 +1,20 @@
-import { env } from "cloudflare:workers";
+import { getAdminUser } from "@/lib/admin";
 import {
   chatGPTSignInPath,
   chatGPTSignOutPath,
-  getChatGPTUser,
 } from "./chatgpt-auth";
 import { PercyApp } from "./percy-app";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const user = await getChatGPTUser();
-  const runtimeEnv = env as unknown as { ADMIN_EMAIL?: string };
-  const isAdmin = Boolean(
-    user &&
-      runtimeEnv.ADMIN_EMAIL &&
-      user.email.toLowerCase() === runtimeEnv.ADMIN_EMAIL.toLowerCase(),
-  );
+  const user = await getAdminUser();
 
   return (
     <PercyApp
-      isAdmin={isAdmin}
-      signInPath={chatGPTSignInPath("/")}
-      signOutPath={chatGPTSignOutPath("/")}
+      isAdmin={Boolean(user)}
+      signInPath={chatGPTSignInPath()}
+      signOutPath={chatGPTSignOutPath()}
     />
   );
 }

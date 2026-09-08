@@ -132,8 +132,8 @@ async function sendOrderEmail(args: {
   }
 }
 
-export async function GET() {
-  const user = await getAdminUser();
+export async function GET(request: Request) {
+  const user = await getAdminUser(request);
   if (!user) {
     return Response.json({ error: "Admin access is required." }, { status: 403 });
   }
@@ -163,7 +163,7 @@ function orderId(value: unknown) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getAdminUser();
+  const user = await getAdminUser(request);
   if (!user) {
     return Response.json({ error: "Admin access is required." }, { status: 403 });
   }
@@ -204,7 +204,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await getAdminUser();
+  const user = await getAdminUser(request);
   if (!user) {
     return Response.json({ error: "Admin access is required." }, { status: 403 });
   }

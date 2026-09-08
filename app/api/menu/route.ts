@@ -13,15 +13,15 @@ function clean(value: unknown, maxLength: number) {
 
 export async function GET(request: Request) {
   try {
-    const config = await loadOrderConfig();
     const adminView = new URL(request.url).searchParams.get("admin") === "1";
 
     if (adminView) {
-      const user = await getAdminUser();
+      const user = await getAdminUser(request);
       if (!user) {
         return Response.json({ error: "Admin access is required." }, { status: 403 });
       }
 
+      const config = await loadOrderConfig();
       const runtimeEnv = env as unknown as {
         RESEND_API_KEY?: string;
         RESEND_FROM_EMAIL?: string;
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       });
     }
 
+    const config = await loadOrderConfig();
     return Response.json({
       adultMealPrice: config.adultMealPrice,
       childMealPrice: config.childMealPrice,
@@ -46,13 +47,14 @@ export async function GET(request: Request) {
       porkAvailable: config.porkAvailable,
       serviceMessage: config.serviceMessage,
     });
-  } catch {
+  } catch (error) {
+    console.error("Menu database read failed", error);
     return Response.json({ error: "The menu could not be loaded." }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  const user = await getAdminUser();
+  const user = await getAdminUser(request);
   if (!user) {
     return Response.json({ error: "Admin access is required." }, { status: 403 });
   }

@@ -10,12 +10,14 @@ type PercyAppProps = {
   isAdmin: boolean;
   signInPath: string;
   signOutPath: string;
+  initialTab?: "order" | "admin";
 };
 
 export function PercyApp({
   isAdmin,
   signInPath,
   signOutPath,
+  initialTab = "order",
 }: PercyAppProps) {
   return (
     <main className="min-h-screen bg-[#f2f7f5] text-[#18201f]">
@@ -42,7 +44,7 @@ export function PercyApp({
       </header>
 
       {isAdmin ? (
-        <Tabs defaultValue="order" className="gap-0">
+        <Tabs defaultValue={initialTab} className="gap-0">
           <div className="sticky top-0 z-30 border-b border-[#cbdcd6] bg-[#f2f7f5]/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-6">
             <TabsList className="mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-2xl border border-[#d5e4df] bg-white p-1 shadow-sm">
               <TabsTrigger value="order" className="rounded-xl text-xs sm:text-sm">

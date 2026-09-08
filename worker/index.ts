@@ -40,7 +40,11 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const response = await handler.fetch(request, env, ctx);
+    const result = new Response(response.body, response);
+    // Staff sessions, menu availability and orders must not be cached.
+    result.headers.set("Cache-Control", "private, no-store");
+    return result;
   },
 };
 

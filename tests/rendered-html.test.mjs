@@ -1,33 +1,15 @@
 import assert from "node:assert/strict";
+import { access } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-
-test("renders development preview metadata", async () => {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-
-  const response = await worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
-
-  assert.equal(response.status, 200);
-  assert.match(
-    response.headers.get("content-type") ?? "",
-    /^text\/html\b/i,
-  );
-  assert.match(await response.text(), developmentPreviewMeta);
+test("builds a standalone Cloudflare Worker with its ordering database and assets", async () => {
+  const config = (await import("../dist/server/wrangler.json", {
+    with: { type: "json" },
+  })).default;
+  assert.equal(config.name, "percy-arms--site");
+  assert.deepEqual(config.compatibility_flags, ["nodejs_compat"]);
+  assert.equal(config.assets.directory, "../client");
+  assert.equal(config.d1_databases[0].binding, "DB");
+  assert.equal(config.d1_databases[0].database_name, "percy-arms-orders");
+  await access(new URL("../dist/client/sunday-roast.png", import.meta.url));
 });
