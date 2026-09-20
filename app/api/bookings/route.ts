@@ -1,10 +1,9 @@
 import { getDb } from "../../../db";
 import { bookings } from "../../../db/schema";
+import { isValidOrderTime } from "@/lib/order-times";
 
 const SERVICES = new Set(["dine_in", "takeaway"]);
 const MEATS = new Set(["chicken", "beef", "pork"]);
-const DINE_IN_TIMES = new Set(["12:00", "12:30", "13:00", "13:30", "14:00", "14:30"]);
-const TAKEAWAY_TIMES = new Set(["12:15", "12:45", "13:15", "13:45", "14:15", "14:45"]);
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -29,13 +28,12 @@ export async function POST(request: Request) {
     const notes = clean(body.notes, 500);
     const quantity = Number(body.quantity);
 
-    const validTimes = service === "dine_in" ? DINE_IN_TIMES : TAKEAWAY_TIMES;
     const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(mealDate) ? new Date(`${mealDate}T12:00:00Z`) : null;
 
     if (
       !SERVICES.has(service) ||
       !MEATS.has(meat) ||
-      !validTimes.has(timeSlot) ||
+      !isValidOrderTime(service, timeSlot) ||
       !parsedDate ||
       parsedDate.getUTCDay() !== 0 ||
       !customerName ||

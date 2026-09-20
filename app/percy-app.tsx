@@ -72,7 +72,7 @@ export function PercyApp({
             <p>Blyth, Northumberland</p>
           </div>
           <div className="sm:text-right">
-            <p className="font-semibold text-[#18201f]">Sunday lunches · 12pm–3pm</p>
+            <p className="font-semibold text-[#18201f]">Sunday lunches · 11:30am–5pm</p>
             <p>Dine in or order for collection</p>
             <a
               href={isAdmin ? signOutPath : signInPath}

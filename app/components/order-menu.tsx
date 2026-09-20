@@ -50,9 +50,7 @@ import type {
   PublicMenuConfig,
   ServiceType,
 } from "@/lib/order-types";
-
-const DINE_IN_TIMES = ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
-const TAKEAWAY_TIMES = ["12:15", "12:45", "13:15", "13:45", "14:15", "14:45"];
+import { DINE_IN_TIMES, TAKEAWAY_TIMES } from "@/lib/order-times";
 
 function money(pence: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -368,7 +366,7 @@ export function OrderMenu() {
                 <MapPin className="size-4 text-[#f4c95d]" /> Percy Arms, Blyth
               </span>
               <span className="inline-flex items-center gap-2">
-                <Clock3 className="size-4 text-[#f4c95d]" /> Sundays, noon–3pm
+                <Clock3 className="size-4 text-[#f4c95d]" /> Sundays, 11:30am–5pm
               </span>
             </div>
           </div>

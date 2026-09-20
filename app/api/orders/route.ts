@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { orders as ordersTable } from "@/db/schema";
 import { getAdminUser } from "@/lib/admin";
 import { loadOrderConfig } from "@/lib/order-config";
+import { isValidOrderTime } from "@/lib/order-times";
 import type {
   AdminOrder,
   MeatChoice,
@@ -24,8 +25,6 @@ const ORDER_STATUSES = new Set<OrderStatus>([
   "completed",
   "cancelled",
 ]);
-const DINE_IN_TIMES = new Set(["12:00", "12:30", "13:00", "13:30", "14:00", "14:30"]);
-const TAKEAWAY_TIMES = new Set(["12:15", "12:45", "13:15", "13:45", "14:15", "14:45"]);
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -252,14 +251,13 @@ export async function POST(request: Request) {
     const allergenAcknowledged = body.allergenAcknowledged === true;
     const rawMeals = Array.isArray(body.meals) ? body.meals.slice(0, 20) : [];
     const rawExtras = Array.isArray(body.extras) ? body.extras.slice(0, 20) : [];
-    const validTimes = service === "dine_in" ? DINE_IN_TIMES : TAKEAWAY_TIMES;
     const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(mealDate)
       ? new Date(`${mealDate}T12:00:00Z`)
       : null;
 
     if (
       !SERVICES.has(service) ||
-      !validTimes.has(timeSlot) ||
+      !isValidOrderTime(service, timeSlot) ||
       !parsedDate ||
       parsedDate.getUTCDay() !== 0 ||
       !customerName ||
