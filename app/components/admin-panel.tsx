@@ -78,6 +78,55 @@ function penceToPounds(value: number) {
   return (value / 100).toFixed(2);
 }
 
+function DirectPriceInput({
+  id,
+  valuePence,
+  min = "0",
+  className,
+  onChange,
+}: {
+  id: string;
+  valuePence: number;
+  min?: string;
+  className: string;
+  onChange: (pricePence: number) => void;
+}) {
+  const [draft, setDraft] = useState(() => penceToPounds(valuePence));
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(penceToPounds(valuePence));
+  }, [editing, valuePence]);
+
+  return (
+    <Input
+      id={id}
+      type="number"
+      inputMode="decimal"
+      min={min}
+      max="500"
+      step="0.01"
+      value={draft}
+      onFocus={(event) => {
+        setEditing(true);
+        event.currentTarget.select();
+      }}
+      onChange={(event) => {
+        const next = event.target.value;
+        setDraft(next);
+        const pricePence = poundsToPence(next);
+        if (pricePence >= 0 && pricePence <= 50000) onChange(pricePence);
+      }}
+      onBlur={() => {
+        setEditing(false);
+        setDraft(penceToPounds(valuePence));
+      }}
+      className={className}
+      required
+    />
+  );
+}
+
 export function AdminPanel() {
   const [config, setConfig] = useState<AdminMenuConfig | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -551,6 +600,7 @@ export function AdminPanel() {
                   <Input
                     id="adult-price"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="500"
                     step="0.01"
@@ -559,6 +609,7 @@ export function AdminPanel() {
                       setAdultPrice(event.target.value);
                       setSaved(false);
                     }}
+                    onFocus={(event) => event.currentTarget.select()}
                     className="h-12 rounded-xl pl-7"
                     required
                   />
@@ -573,6 +624,7 @@ export function AdminPanel() {
                   <Input
                     id="child-price"
                     type="number"
+                    inputMode="decimal"
                     min="0.01"
                     max="500"
                     step="0.01"
@@ -581,6 +633,7 @@ export function AdminPanel() {
                       setChildPrice(event.target.value);
                       setSaved(false);
                     }}
+                    onFocus={(event) => event.currentTarget.select()}
                     className="h-12 rounded-xl pl-7"
                     required
                   />
@@ -667,20 +720,16 @@ export function AdminPanel() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#6e625a]">
                           £
                         </span>
-                        <Input
+                        <DirectPriceInput
                           id={`special-price-${special.id}`}
-                          type="number"
                           min="0.01"
-                          max="500"
-                          step="0.01"
-                          value={penceToPounds(special.pricePence)}
-                          onChange={(event) =>
+                          valuePence={special.pricePence}
+                          onChange={(pricePence) =>
                             changeSpecial(special.id, {
-                              pricePence: poundsToPence(event.target.value),
+                              pricePence,
                             })
                           }
                           className="h-12 rounded-xl bg-white pl-7"
-                          required
                         />
                       </div>
                     </div>
@@ -827,20 +876,16 @@ export function AdminPanel() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold">
                         £
                       </span>
-                      <Input
+                      <DirectPriceInput
                         id={`extra-price-${extra.id}`}
-                        type="number"
                         min="0"
-                        max="500"
-                        step="0.01"
-                        value={penceToPounds(extra.pricePence)}
-                        onChange={(event) =>
+                        valuePence={extra.pricePence}
+                        onChange={(pricePence) =>
                           changeExtra(extra.id, {
-                            pricePence: poundsToPence(event.target.value),
+                            pricePence,
                           })
                         }
                         className="h-11 rounded-xl pl-7"
-                        required
                       />
                     </div>
                   </div>
