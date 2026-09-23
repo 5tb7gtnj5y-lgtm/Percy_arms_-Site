@@ -15,6 +15,7 @@ import {
   Plus,
   ReceiptText,
   ShoppingBag,
+  Sparkles,
   Trash2,
   UtensilsCrossed,
 } from "lucide-react";
@@ -398,6 +399,39 @@ export function OrderMenu() {
               ? `${availableMeats.map((meat) => `${meat[0].toUpperCase()}${meat.slice(1)}`).join(" and ")} can still be ordered.`
               : "No meat choices are currently available."}
           </div>
+        )}
+
+        {menu.specials.length > 0 && (
+          <section
+            className="mt-5 overflow-hidden rounded-[1.5rem] border border-[#f4c95d]/55 bg-[#123c37] text-white shadow-[0_14px_34px_rgba(18,60,55,0.18)]"
+            aria-labelledby="specials-heading"
+          >
+            <div className="flex items-center gap-3 border-b border-white/15 px-5 py-4 sm:px-6">
+              <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f4c95d] text-[#123c37]">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f4c95d]">
+                  From the kitchen
+                </p>
+                <h2 id="specials-heading" className="font-serif text-2xl font-bold">
+                  This week’s specials
+                </h2>
+              </div>
+            </div>
+            <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+              {menu.specials.map((special) => (
+                <article
+                  key={special.id}
+                  className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 shadow-inner"
+                >
+                  <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-[#fff9e9]">
+                    {special.text}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
 
         <aside className="mt-5 rounded-2xl border border-[#e4c35a] bg-[#fff9df] p-5 text-[#564317]" aria-labelledby="allergen-heading">

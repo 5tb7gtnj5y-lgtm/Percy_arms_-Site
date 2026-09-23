@@ -1,6 +1,7 @@
+import { env } from "cloudflare:workers";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { menuExtras, orderSettings } from "@/db/schema";
+import { menuExtras, menuSpecials, orderSettings } from "@/db/schema";
 import type { ExtraOption } from "./order-types";
 
 const DEFAULT_EXTRAS: ExtraOption[] = [
@@ -10,7 +11,30 @@ const DEFAULT_EXTRAS: ExtraOption[] = [
   { id: "cauliflower-cheese", name: "Cauliflower cheese", pricePence: 250, active: true, sortOrder: 3 },
 ];
 
+let specialsTableReady: Promise<unknown> | null = null;
+
+export function ensureSpecialsTable() {
+  if (!specialsTableReady) {
+    specialsTableReady = env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS menu_specials (
+        id TEXT PRIMARY KEY NOT NULL,
+        text TEXT NOT NULL,
+        active INTEGER DEFAULT 1 NOT NULL,
+        sort_order INTEGER DEFAULT 0 NOT NULL
+      )`,
+    )
+      .run()
+      .catch((error) => {
+        specialsTableReady = null;
+        throw error;
+      });
+  }
+
+  return specialsTableReady;
+}
+
 export async function loadOrderConfig() {
+  await ensureSpecialsTable();
   const db = getDb();
   const [settings] = await db
     .select()
@@ -21,6 +45,10 @@ export async function loadOrderConfig() {
     .select()
     .from(menuExtras)
     .orderBy(asc(menuExtras.sortOrder), asc(menuExtras.name));
+  const savedSpecials = await db
+    .select()
+    .from(menuSpecials)
+    .orderBy(asc(menuSpecials.sortOrder));
 
   return {
     adultMealPrice: settings?.adultMealPrice ?? 1295,
@@ -32,6 +60,7 @@ export async function loadOrderConfig() {
     porkAvailable: settings?.porkAvailable ?? true,
     serviceMessage: settings?.serviceMessage ?? "",
     extras: savedExtras.length > 0 ? savedExtras : DEFAULT_EXTRAS,
+    specials: savedSpecials,
     configured: Boolean(
       settings &&
         settings.adultMealPrice > 0 &&

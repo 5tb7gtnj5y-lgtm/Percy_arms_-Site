@@ -58,6 +58,9 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     await database.batch(statements.map((statement) => database.prepare(statement)));
   }
   await repair();
+  // The live site may deploy before a manual migration is applied. The menu
+  // endpoint must create the additive specials table safely on first use.
+  await database.prepare("DROP TABLE IF EXISTS menu_specials").run();
 
   const origin = "https://pub.example";
   async function request(url, options = {}, admin = false) {
@@ -118,12 +121,26 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     assert.match(html, /Admin sign out/);
     assert.match(page.headers.get("cache-control"), /no-store/);
     const response = await request("/api/menu", {
-      method: "POST", body: JSON.stringify({ ...settings, orderEmail: "orders@example.com" }),
+      method: "POST", body: JSON.stringify({
+        ...settings,
+        orderEmail: "orders@example.com",
+        specials: [
+          { id: "special-pie", text: "Homemade steak pie — £12.95", active: true, sortOrder: 0 },
+          { id: "special-hidden", text: "Hidden test special", active: false, sortOrder: 1 },
+        ],
+      }),
     }, true);
     assert.equal(response.status, 200, await response.clone().text());
     settings = await response.json();
     assert.equal(settings.configured, true);
     assert.equal(settings.emailServiceReady, false);
+    assert.equal(settings.specials.length, 2);
+    const publicMenu = await request("/api/menu");
+    assert.equal(publicMenu.status, 200);
+    const publicSettings = await publicMenu.json();
+    assert.deepEqual(publicSettings.specials.map((special) => special.text), [
+      "Homemade steak pie — £12.95",
+    ]);
     const blocked = await request("/api/menu", { method: "POST", headers: { origin: "https://another.example" } }, true);
     assert.equal(blocked.status, 403);
     await blocked.text();

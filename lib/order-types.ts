@@ -17,10 +17,18 @@ export type ExtraOption = {
   sortOrder: number;
 };
 
+export type SpecialOption = {
+  id: string;
+  text: string;
+  active: boolean;
+  sortOrder: number;
+};
+
 export type PublicMenuConfig = {
   adultMealPrice: number;
   childMealPrice: number;
   extras: ExtraOption[];
+  specials: SpecialOption[];
   configured: boolean;
   orderingOpen: boolean;
   chickenAvailable: boolean;

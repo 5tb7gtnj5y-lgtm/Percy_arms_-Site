@@ -48,6 +48,13 @@ export const menuExtras = sqliteTable("menu_extras", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+export const menuSpecials = sqliteTable("menu_specials", {
+  id: text("id").primaryKey(),
+  text: text("text").notNull(),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
 export const orders = sqliteTable("orders", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   reference: text("reference").notNull().unique(),

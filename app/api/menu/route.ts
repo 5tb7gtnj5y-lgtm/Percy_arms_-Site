@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getAdminUser } from "@/lib/admin";
-import { loadOrderConfig } from "@/lib/order-config";
+import { ensureSpecialsTable, loadOrderConfig } from "@/lib/order-config";
 
 function validPrice(value: unknown) {
   const price = Number(value);
@@ -40,6 +40,7 @@ export async function GET(request: Request) {
       adultMealPrice: config.adultMealPrice,
       childMealPrice: config.childMealPrice,
       extras: config.extras.filter((extra) => extra.active),
+      specials: config.specials.filter((special) => special.active),
       configured: config.configured,
       orderingOpen: config.orderingOpen,
       chickenAvailable: config.chickenAvailable,
@@ -70,6 +71,9 @@ export async function POST(request: Request) {
     const porkAvailable = body.porkAvailable !== false;
     const serviceMessage = clean(body.serviceMessage, 240);
     const rawExtras = Array.isArray(body.extras) ? body.extras.slice(0, 20) : [];
+    const rawSpecials = Array.isArray(body.specials)
+      ? body.specials.slice(0, 12)
+      : [];
 
     if (
       adultMealPrice === null ||
@@ -105,6 +109,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const specials = rawSpecials.map((raw, index) => {
+      const item = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+      const text = clean(item.text, 500);
+      const suppliedId = clean(item.id, 80).replace(/[^a-zA-Z0-9_-]/g, "");
+      return {
+        id: suppliedId || `special-${crypto.randomUUID()}`,
+        text,
+        active: item.active !== false,
+        sortOrder: index,
+      };
+    });
+
+    if (specials.some((special) => !special.text)) {
+      return Response.json(
+        { error: "Every special needs some text, or it can be deleted." },
+        { status: 400 },
+      );
+    }
+
+    await ensureSpecialsTable();
     const database = env.DB;
     const statements = [
       database
@@ -136,6 +160,7 @@ export async function POST(request: Request) {
           user.email,
         ),
       database.prepare("DELETE FROM menu_extras"),
+      database.prepare("DELETE FROM menu_specials"),
     ];
 
     for (const extra of extras) {
@@ -152,6 +177,23 @@ export async function POST(request: Request) {
             extra.pricePence,
             extra.active ? 1 : 0,
             extra.sortOrder,
+          ),
+      );
+    }
+
+    for (const special of specials) {
+      statements.push(
+        database
+          .prepare(
+            `INSERT INTO menu_specials
+              (id, text, active, sort_order)
+             VALUES (?, ?, ?, ?)`,
+          )
+          .bind(
+            special.id,
+            special.text,
+            special.active ? 1 : 0,
+            special.sortOrder,
           ),
       );
     }

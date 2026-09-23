@@ -16,6 +16,7 @@ import {
   Save,
   Search,
   Settings2,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import {
@@ -49,6 +50,7 @@ import type {
   AdminOrder,
   ExtraOption,
   OrderStatus,
+  SpecialOption,
 } from "@/lib/order-types";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -88,6 +90,7 @@ export function AdminPanel() {
   const [porkAvailable, setPorkAvailable] = useState(true);
   const [serviceMessage, setServiceMessage] = useState("");
   const [extras, setExtras] = useState<ExtraOption[]>([]);
+  const [specials, setSpecials] = useState<SpecialOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -142,6 +145,7 @@ export function AdminPanel() {
         setPorkAvailable(menuConfig.porkAvailable);
         setServiceMessage(menuConfig.serviceMessage);
         setExtras(menuConfig.extras);
+        setSpecials(menuConfig.specials);
         setOrders(savedOrders);
         knownOrderIds.current = new Set(savedOrders.map((order) => order.id));
       })
@@ -359,6 +363,40 @@ export function AdminPanel() {
     setSaved(false);
   }
 
+  function changeSpecial(
+    id: string,
+    changes: Partial<Pick<SpecialOption, "text" | "active">>,
+  ) {
+    setSpecials((current) =>
+      current.map((special) =>
+        special.id === id ? { ...special, ...changes } : special,
+      ),
+    );
+    setSaved(false);
+  }
+
+  function addSpecial() {
+    setSpecials((current) => [
+      ...current,
+      {
+        id: `special-${crypto.randomUUID()}`,
+        text: "",
+        active: true,
+        sortOrder: current.length,
+      },
+    ]);
+    setSaved(false);
+  }
+
+  function removeSpecial(id: string) {
+    setSpecials((current) =>
+      current
+        .filter((special) => special.id !== id)
+        .map((special, index) => ({ ...special, sortOrder: index })),
+    );
+    setSaved(false);
+  }
+
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -379,6 +417,7 @@ export function AdminPanel() {
           porkAvailable,
           serviceMessage,
           extras,
+          specials,
         }),
       });
       const result = (await response.json()) as AdminMenuConfig & {
@@ -389,6 +428,7 @@ export function AdminPanel() {
       }
       setConfig(result);
       setExtras(result.extras);
+      setSpecials(result.specials);
       setAdultPrice(penceToPounds(result.adultMealPrice));
       setChildPrice(penceToPounds(result.childMealPrice));
       setOrderEmail(result.orderEmail);
@@ -476,7 +516,7 @@ export function AdminPanel() {
               Menu, email and orders
             </h2>
             <p className="mt-3 max-w-2xl leading-7 text-[#d6f0e9]">
-              Set prices and extras, then manage incoming Sunday lunch orders in one place.
+              Set prices, extras and specials, then manage incoming Sunday lunch orders in one place.
             </p>
           </div>
           <div className="flex gap-3">
@@ -545,6 +585,80 @@ export function AdminPanel() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+            <CardHeader>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 font-serif text-2xl">
+                    <Sparkles className="text-[#df654d]" /> Specials board
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-[#60716d]">
+                    Add as many specials as you need. Switch each one on or off at any time.
+                  </p>
+                </div>
+                <Button type="button" variant="outline" onClick={addSpecial}>
+                  <Plus /> Add special
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {specials.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-[#cfded9] bg-[#f7faf9] px-5 py-6 text-center text-sm leading-6 text-[#60716d]">
+                  No specials have been added yet. Select <strong>Add special</strong> to create one.
+                </div>
+              )}
+              {specials.map((special, index) => (
+                <div
+                  key={special.id}
+                  className="rounded-2xl border border-[#d9e6e2] bg-[#fbfdfc] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor={`special-text-${special.id}`} className="text-base">
+                      Special {index + 1}
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <Label htmlFor={`special-active-${special.id}`} className="text-sm">
+                        Show
+                      </Label>
+                      <Switch
+                        id={`special-active-${special.id}`}
+                        checked={special.active}
+                        onCheckedChange={(active) =>
+                          changeSpecial(special.id, { active })
+                        }
+                        aria-label={`Show special ${index + 1}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-[#8b3838] hover:bg-red-50 hover:text-[#8b3838]"
+                        onClick={() => removeSpecial(special.id)}
+                      >
+                        <Trash2 />
+                        <span className="sr-only">Delete special {index + 1}</span>
+                      </Button>
+                    </div>
+                  </div>
+                  <Textarea
+                    id={`special-text-${special.id}`}
+                    value={special.text}
+                    onChange={(event) =>
+                      changeSpecial(special.id, { text: event.target.value })
+                    }
+                    maxLength={500}
+                    placeholder="For example: Homemade steak pie, chips and peas — £12.95"
+                    className="mt-3 min-h-28 rounded-xl bg-white"
+                    required
+                  />
+                  <p className="mt-2 text-right text-xs text-[#7c8a86]">
+                    {special.text.length}/500
+                  </p>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -741,7 +855,7 @@ export function AdminPanel() {
               </>
             ) : (
               <>
-                <Save /> Save menu and email
+                <Save /> Save menu and specials
               </>
             )}
           </Button>
