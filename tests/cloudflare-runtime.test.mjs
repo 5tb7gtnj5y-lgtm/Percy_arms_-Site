@@ -96,6 +96,17 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     assert.equal(settings.orderEmail, undefined);
   });
 
+  await t.test("a legacy special keeps the price already written in its text", async () => {
+    await database
+      .prepare("INSERT INTO menu_specials (id, text, active, sort_order) VALUES (?, ?, 1, 0)")
+      .bind("legacy-special", "Christmas lunch £35.00 each")
+      .run();
+    const menu = await request("/api/menu");
+    const result = await menu.json();
+    assert.equal(result.specials[0].pricePence, 3500);
+    await database.prepare("DELETE FROM menu_specials").run();
+  });
+
   await t.test("anonymous and forged identities cannot access staff endpoints", async () => {
     for (const [url, method] of [
       ["/api/menu?admin=1", "GET"], ["/api/menu", "POST"],

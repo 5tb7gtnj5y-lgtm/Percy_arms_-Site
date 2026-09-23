@@ -37,7 +37,14 @@ function decodeSpecial(value: string) {
     // Specials saved before prices were added are kept as plain text.
   }
 
-  return { text: value, pricePence: 0 };
+  const legacyPrice = value.match(/£\s*(\d+(?:\.\d{1,2})?)/);
+  const legacyPounds = legacyPrice ? Number(legacyPrice[1]) : 0;
+  return {
+    text: value,
+    pricePence: Number.isFinite(legacyPounds)
+      ? Math.round(legacyPounds * 100)
+      : 0,
+  };
 }
 
 export function encodeSpecial(text: string, pricePence: number) {
