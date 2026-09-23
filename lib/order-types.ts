@@ -20,6 +20,7 @@ export type ExtraOption = {
 export type SpecialOption = {
   id: string;
   text: string;
+  pricePence: number;
   active: boolean;
   sortOrder: number;
 };
@@ -54,6 +55,11 @@ export type CartExtra = {
   quantity: number;
 };
 
+export type CartSpecial = {
+  id: string;
+  quantity: number;
+};
+
 export type PricedMealLine = CartMeal & {
   name: string;
   unitPricePence: number;
@@ -64,8 +70,14 @@ export type PricedExtraLine = CartExtra & {
   unitPricePence: number;
 };
 
+export type PricedSpecialLine = CartSpecial & {
+  name: string;
+  unitPricePence: number;
+};
+
 export type OrderLines = {
   meals: PricedMealLine[];
+  specials: PricedSpecialLine[];
   extras: PricedExtraLine[];
 };
 

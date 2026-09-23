@@ -37,6 +37,15 @@ function positiveQuantity(value: unknown, max = 20) {
     : null;
 }
 
+function parseOrderLines(value: string): OrderLines {
+  const parsed = JSON.parse(value) as Partial<OrderLines>;
+  return {
+    meals: Array.isArray(parsed.meals) ? parsed.meals : [],
+    specials: Array.isArray(parsed.specials) ? parsed.specials : [],
+    extras: Array.isArray(parsed.extras) ? parsed.extras : [],
+  };
+}
+
 function orderReference() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.getRandomValues(new Uint8Array(6));
@@ -66,20 +75,26 @@ function orderEmailText(args: {
     (item) =>
       `${item.quantity} x ${item.name} — ${item.meat} — ${formatMoney(item.unitPricePence * item.quantity)}`,
   );
+  const specialLines = args.lines.specials.map(
+    (item) =>
+      `${item.quantity} x ${item.name} — ${formatMoney(item.unitPricePence * item.quantity)}`,
+  );
   const extraLines = args.lines.extras.map(
     (item) =>
       `${item.quantity} x ${item.name} — ${formatMoney(item.unitPricePence * item.quantity)}`,
   );
 
   return [
-    `NEW SUNDAY LUNCH ORDER — ${args.reference}`,
+    `NEW PERCY ARMS ORDER — ${args.reference}`,
     "",
     `Service: ${args.service === "dine_in" ? "Dine in" : "Takeaway collection"}`,
     `Date: ${args.mealDate}`,
     `Time: ${args.timeSlot}`,
     "",
-    "MEALS",
-    ...mealLines,
+    ...(mealLines.length ? ["MEALS", ...mealLines] : []),
+    ...(specialLines.length
+      ? [...(mealLines.length ? [""] : []), "SPECIALS", ...specialLines]
+      : []),
     ...(extraLines.length ? ["", "EXTRAS", ...extraLines] : []),
     "",
     `TOTAL: ${formatMoney(args.totalPence)}`,
@@ -147,7 +162,7 @@ export async function GET(request: Request) {
     const orders: AdminOrder[] = rows.map((row) => ({
       ...row,
       service: row.service as ServiceType,
-      lines: JSON.parse(row.lineItems) as OrderLines,
+      lines: parseOrderLines(row.lineItems),
       status: row.status as OrderStatus,
     }));
     return Response.json({ orders });
@@ -250,6 +265,9 @@ export async function POST(request: Request) {
     const notes = clean(body.notes, 500);
     const allergenAcknowledged = body.allergenAcknowledged === true;
     const rawMeals = Array.isArray(body.meals) ? body.meals.slice(0, 20) : [];
+    const rawSpecials = Array.isArray(body.specials)
+      ? body.specials.slice(0, 12)
+      : [];
     const rawExtras = Array.isArray(body.extras) ? body.extras.slice(0, 20) : [];
     const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(mealDate)
       ? new Date(`${mealDate}T12:00:00Z`)
@@ -264,7 +282,7 @@ export async function POST(request: Request) {
       !/^\S+@\S+\.\S+$/.test(email) ||
       !phone ||
       !allergenAcknowledged ||
-      rawMeals.length === 0
+      (rawMeals.length === 0 && rawSpecials.length === 0)
     ) {
       return Response.json(
         { error: "Please check the order details and try again." },
@@ -324,6 +342,32 @@ export async function POST(request: Request) {
       );
     }
 
+    const activeSpecials = new Map(
+      config.specials
+        .filter((special) => special.active && special.pricePence > 0)
+        .map((special) => [special.id, special]),
+    );
+    const specials = rawSpecials.map((raw) => {
+      const item = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+      const id = clean(item.id, 80);
+      const quantity = positiveQuantity(item.quantity, 10);
+      const option = activeSpecials.get(id);
+      if (!option || quantity === null) return null;
+      return {
+        id,
+        quantity,
+        name: option.text,
+        unitPricePence: option.pricePence,
+      };
+    });
+
+    if (specials.some((special) => special === null)) {
+      return Response.json(
+        { error: "One of the specials is no longer available." },
+        { status: 400 },
+      );
+    }
+
     const activeExtras = new Map(
       config.extras.filter((extra) => extra.active).map((extra) => [extra.id, extra]),
     );
@@ -347,10 +391,17 @@ export async function POST(request: Request) {
 
     const lines: OrderLines = {
       meals: meals.filter((meal) => meal !== null) as OrderLines["meals"],
+      specials: specials.filter(
+        (special) => special !== null,
+      ) as OrderLines["specials"],
       extras: extras.filter((extra) => extra !== null) as OrderLines["extras"],
     };
     const totalPence =
       lines.meals.reduce(
+        (total, item) => total + item.unitPricePence * item.quantity,
+        0,
+      ) +
+      lines.specials.reduce(
         (total, item) => total + item.unitPricePence * item.quantity,
         0,
       ) +

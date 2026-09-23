@@ -365,7 +365,7 @@ export function AdminPanel() {
 
   function changeSpecial(
     id: string,
-    changes: Partial<Pick<SpecialOption, "text" | "active">>,
+    changes: Partial<Pick<SpecialOption, "text" | "pricePence" | "active">>,
   ) {
     setSpecials((current) =>
       current.map((special) =>
@@ -381,6 +381,7 @@ export function AdminPanel() {
       {
         id: `special-${crypto.randomUUID()}`,
         text: "",
+        pricePence: 0,
         active: true,
         sortOrder: current.length,
       },
@@ -596,7 +597,7 @@ export function AdminPanel() {
                     <Sparkles className="text-[#df654d]" /> Specials board
                   </CardTitle>
                   <p className="mt-2 text-sm leading-6 text-[#60716d]">
-                    Add as many specials as you need. Switch each one on or off at any time.
+                    Add a description and price. Customers can order each special through the normal checkout.
                   </p>
                 </div>
                 <Button type="button" variant="outline" onClick={addSpecial}>
@@ -643,20 +644,47 @@ export function AdminPanel() {
                       </Button>
                     </div>
                   </div>
-                  <Textarea
-                    id={`special-text-${special.id}`}
-                    value={special.text}
-                    onChange={(event) =>
-                      changeSpecial(special.id, { text: event.target.value })
-                    }
-                    maxLength={500}
-                    placeholder="For example: Homemade steak pie, chips and peas — £12.95"
-                    className="mt-3 min-h-28 rounded-xl bg-white"
-                    required
-                  />
-                  <p className="mt-2 text-right text-xs text-[#7c8a86]">
-                    {special.text.length}/500
-                  </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_8rem] sm:items-start">
+                    <div>
+                      <Textarea
+                        id={`special-text-${special.id}`}
+                        value={special.text}
+                        onChange={(event) =>
+                          changeSpecial(special.id, { text: event.target.value })
+                        }
+                        maxLength={500}
+                        placeholder="For example: Homemade steak pie, chips and peas"
+                        className="min-h-28 rounded-xl bg-white"
+                        required
+                      />
+                      <p className="mt-2 text-right text-xs text-[#7c8a86]">
+                        {special.text.length}/500
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`special-price-${special.id}`}>Price</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#6e625a]">
+                          £
+                        </span>
+                        <Input
+                          id={`special-price-${special.id}`}
+                          type="number"
+                          min="0.01"
+                          max="500"
+                          step="0.01"
+                          value={penceToPounds(special.pricePence)}
+                          onChange={(event) =>
+                            changeSpecial(special.id, {
+                              pricePence: poundsToPence(event.target.value),
+                            })
+                          }
+                          className="h-12 rounded-xl bg-white pl-7"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -1002,6 +1030,19 @@ export function AdminPanel() {
                         </span>
                         <strong>
                           {money(meal.unitPricePence * meal.quantity)}
+                        </strong>
+                      </div>
+                    ))}
+                    {order.lines.specials.map((special) => (
+                      <div
+                        key={special.id}
+                        className="flex justify-between gap-3 border-t border-[#eee6da] pt-3"
+                      >
+                        <span className="whitespace-pre-wrap">
+                          {special.quantity} × {special.name}
+                        </span>
+                        <strong>
+                          {money(special.unitPricePence * special.quantity)}
                         </strong>
                       </div>
                     ))}

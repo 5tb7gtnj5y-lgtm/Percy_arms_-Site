@@ -1,6 +1,10 @@
 import { env } from "cloudflare:workers";
 import { getAdminUser } from "@/lib/admin";
-import { ensureSpecialsTable, loadOrderConfig } from "@/lib/order-config";
+import {
+  encodeSpecial,
+  ensureSpecialsTable,
+  loadOrderConfig,
+} from "@/lib/order-config";
 
 function validPrice(value: unknown) {
   const price = Number(value);
@@ -40,7 +44,9 @@ export async function GET(request: Request) {
       adultMealPrice: config.adultMealPrice,
       childMealPrice: config.childMealPrice,
       extras: config.extras.filter((extra) => extra.active),
-      specials: config.specials.filter((special) => special.active),
+      specials: config.specials.filter(
+        (special) => special.active && special.pricePence > 0,
+      ),
       configured: config.configured,
       orderingOpen: config.orderingOpen,
       chickenAvailable: config.chickenAvailable,
@@ -112,18 +118,27 @@ export async function POST(request: Request) {
     const specials = rawSpecials.map((raw, index) => {
       const item = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
       const text = clean(item.text, 500);
+      const pricePence = validPrice(item.pricePence);
       const suppliedId = clean(item.id, 80).replace(/[^a-zA-Z0-9_-]/g, "");
       return {
         id: suppliedId || `special-${crypto.randomUUID()}`,
         text,
+        pricePence,
         active: item.active !== false,
         sortOrder: index,
       };
     });
 
-    if (specials.some((special) => !special.text)) {
+    if (
+      specials.some(
+        (special) =>
+          !special.text ||
+          special.pricePence === null ||
+          special.pricePence < 1,
+      )
+    ) {
       return Response.json(
-        { error: "Every special needs some text, or it can be deleted." },
+        { error: "Every special needs some text and a valid price." },
         { status: 400 },
       );
     }
@@ -191,7 +206,7 @@ export async function POST(request: Request) {
           )
           .bind(
             special.id,
-            special.text,
+            encodeSpecial(special.text, special.pricePence ?? 0),
             special.active ? 1 : 0,
             special.sortOrder,
           ),

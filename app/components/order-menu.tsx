@@ -45,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   CartExtra,
   CartMeal,
+  CartSpecial,
   MealType,
   MeatChoice,
   OrderConfirmation,
@@ -90,6 +91,7 @@ export function OrderMenu() {
   const [mealDate, setMealDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [cartMeals, setCartMeals] = useState<CartMeal[]>([]);
+  const [cartSpecials, setCartSpecials] = useState<CartSpecial[]>([]);
   const [cartExtras, setCartExtras] = useState<CartExtra[]>([]);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
   const [selectedMeat, setSelectedMeat] = useState<MeatChoice>("beef");
@@ -122,6 +124,10 @@ export function OrderMenu() {
   const availableTimes =
     service === "dine_in" ? DINE_IN_TIMES : TAKEAWAY_TIMES;
   const mealCount = cartMeals.reduce((total, item) => total + item.quantity, 0);
+  const specialCount = cartSpecials.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
   const extraCount = cartExtras.reduce((total, item) => total + item.quantity, 0);
   const totalPence = menu
     ? cartMeals.reduce(
@@ -133,6 +139,10 @@ export function OrderMenu() {
             item.quantity,
         0,
       ) +
+      cartSpecials.reduce((total, item) => {
+        const option = menu.specials.find((special) => special.id === item.id);
+        return total + (option?.pricePence ?? 0) * item.quantity;
+      }, 0) +
       cartExtras.reduce((total, item) => {
         const option = menu.extras.find((extra) => extra.id === item.id);
         return total + (option?.pricePence ?? 0) * item.quantity;
@@ -196,6 +206,32 @@ export function OrderMenu() {
     });
   }
 
+  function addSpecial(id: string) {
+    setCartSpecials((current) => {
+      const existing = current.find((item) => item.id === id);
+      if (existing) {
+        return current.map((item) =>
+          item.id === id
+            ? { ...item, quantity: Math.min(10, item.quantity + 1) }
+            : item,
+        );
+      }
+      return [...current, { id, quantity: 1 }];
+    });
+  }
+
+  function changeSpecialQuantity(id: string, change: number) {
+    setCartSpecials((current) =>
+      current
+        .map((item) =>
+          item.id === id
+            ? { ...item, quantity: Math.max(0, Math.min(10, item.quantity + change)) }
+            : item,
+        )
+        .filter((item) => item.quantity > 0),
+    );
+  }
+
   function changeExtraQuantity(id: string, change: number) {
     setCartExtras((current) =>
       current
@@ -214,8 +250,8 @@ export function OrderMenu() {
       setSubmitError("Choose your Sunday and time before checking out.");
       return;
     }
-    if (cartMeals.length === 0) {
-      setSubmitError("Add at least one Sunday lunch to your basket.");
+    if (cartMeals.length === 0 && cartSpecials.length === 0) {
+      setSubmitError("Add a Sunday lunch or special to your basket.");
       return;
     }
     setAllergenConfirmed(false);
@@ -237,6 +273,7 @@ export function OrderMenu() {
           mealDate,
           timeSlot,
           meals: cartMeals,
+          specials: cartSpecials,
           extras: cartExtras,
           customerName: String(form.get("customerName") ?? ""),
           email: String(form.get("email") ?? ""),
@@ -267,6 +304,7 @@ export function OrderMenu() {
   function resetOrder() {
     setConfirmation(null);
     setCartMeals([]);
+    setCartSpecials([]);
     setCartExtras([]);
     setMealDate("");
     setTimeSlot("");
@@ -359,8 +397,8 @@ export function OrderMenu() {
               Build your Sunday lunch
             </h1>
             <p className="mt-3 leading-7 text-[#f6ead5]">
-              Choose adult or children’s meals, pick the meat, add extras and
-              check your basket before ordering.
+              Choose a Sunday roast or one of this week’s specials, add extras
+              and check your basket before ordering.
             </p>
             <div className="mt-5 flex flex-wrap gap-4 text-sm text-[#f6ead5]">
               <span className="inline-flex items-center gap-2">
@@ -420,16 +458,62 @@ export function OrderMenu() {
               </div>
             </div>
             <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
-              {menu.specials.map((special) => (
-                <article
-                  key={special.id}
-                  className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 shadow-inner"
-                >
-                  <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-[#fff9e9]">
-                    {special.text}
-                  </p>
-                </article>
-              ))}
+              {menu.specials.map((special) => {
+                const quantity =
+                  cartSpecials.find((item) => item.id === special.id)?.quantity ?? 0;
+                return (
+                  <article
+                    key={special.id}
+                    className="flex flex-col justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 shadow-inner"
+                  >
+                    <div>
+                      <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-[#fff9e9]">
+                        {special.text}
+                      </p>
+                      <p className="mt-2 text-lg font-black text-[#f4c95d]">
+                        {money(special.pricePence)}
+                      </p>
+                    </div>
+                    {quantity === 0 ? (
+                      <Button
+                        type="button"
+                        className="w-full rounded-xl bg-[#f4c95d] font-bold text-[#123c37] hover:bg-[#f8d87f]"
+                        onClick={() => addSpecial(special.id)}
+                        disabled={!menu.configured || !menu.orderingOpen}
+                      >
+                        Add to order <Plus />
+                      </Button>
+                    ) : (
+                      <div className="flex items-center justify-between rounded-xl bg-black/15 p-2">
+                        <span className="text-sm font-semibold">In your basket</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                            onClick={() => changeSpecialQuantity(special.id, -1)}
+                          >
+                            <Minus />
+                            <span className="sr-only">Remove one {special.text}</span>
+                          </Button>
+                          <span className="w-5 text-center font-bold">{quantity}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                            onClick={() => changeSpecialQuantity(special.id, 1)}
+                          >
+                            <Plus />
+                            <span className="sr-only">Add one {special.text}</span>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}
@@ -665,15 +749,17 @@ export function OrderMenu() {
                   <ShoppingBag className="text-[#df654d]" /> Your basket
                 </CardTitle>
                 <Badge className="bg-[#e5f2ee] text-[#123c37]">
-                  {mealCount + extraCount} items
+                  {mealCount + specialCount + extraCount} items
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 pt-1">
-              {cartMeals.length === 0 && cartExtras.length === 0 && (
+              {cartMeals.length === 0 &&
+                cartSpecials.length === 0 &&
+                cartExtras.length === 0 && (
                 <div className="py-8 text-center text-sm leading-6 text-[#81736a]">
                   <ReceiptText className="mx-auto mb-3 size-9 opacity-50" />
-                  Your chosen meals and extras will appear here.
+                  Your chosen meals, specials and extras will appear here.
                 </div>
               )}
 
@@ -735,6 +821,65 @@ export function OrderMenu() {
                 );
               })}
 
+              {cartSpecials.map((item) => {
+                const option = menu.specials.find(
+                  (special) => special.id === item.id,
+                );
+                if (!option) return null;
+                return (
+                  <div key={item.id} className="border-b border-[#eee6da] pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="whitespace-pre-wrap font-semibold">
+                          {option.text}
+                        </p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-wide text-[#df654d]">
+                          Special
+                        </p>
+                      </div>
+                      <strong>{money(option.pricePence * item.quantity)}</strong>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon-sm"
+                          className="rounded-full"
+                          onClick={() => changeSpecialQuantity(item.id, -1)}
+                        >
+                          <Minus />
+                        </Button>
+                        <span className="w-5 text-center font-bold">{item.quantity}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon-sm"
+                          className="rounded-full"
+                          onClick={() => changeSpecialQuantity(item.id, 1)}
+                        >
+                          <Plus />
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-[#8b3838]"
+                        onClick={() =>
+                          setCartSpecials((current) =>
+                            current.filter((special) => special.id !== item.id),
+                          )
+                        }
+                      >
+                        <Trash2 />
+                        <span className="sr-only">Remove special</span>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
               {cartExtras.map((item) => {
                 const option = menu.extras.find((extra) => extra.id === item.id);
                 if (!option) return null;
@@ -763,7 +908,11 @@ export function OrderMenu() {
               <Button
                 className="h-13 w-full rounded-xl bg-[#123c37] text-base font-bold shadow-lg shadow-[#123c37]/15 hover:bg-[#1d5a52]"
                 onClick={beginCheckout}
-                disabled={!menu.configured || !menu.orderingOpen || cartMeals.length === 0}
+                disabled={
+                  !menu.configured ||
+                  !menu.orderingOpen ||
+                  (cartMeals.length === 0 && cartSpecials.length === 0)
+                }
               >
                 Go to checkout <ChevronRight />
               </Button>

@@ -218,7 +218,16 @@ export function MemberOffers({
                 <CardContent className="space-y-3 text-sm">
                   <p className="flex items-center gap-2 text-[#60716d]"><Clock3 className="size-4" /> {order.mealDate} at {order.timeSlot}</p>
                   <div className="flex justify-between border-t border-[#dfe9e5] pt-3">
-                    <span>{order.lines.meals.reduce((total, meal) => total + meal.quantity, 0)} meals</span>
+                    <span>
+                      {order.lines.meals.reduce(
+                        (total, meal) => total + meal.quantity,
+                        0,
+                      ) +
+                        order.lines.specials.reduce(
+                          (total, special) => total + special.quantity,
+                          0,
+                        )} ordered items
+                    </span>
                     <strong>{money(order.totalPence)}</strong>
                   </div>
                 </CardContent>

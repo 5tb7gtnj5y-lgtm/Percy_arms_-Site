@@ -125,8 +125,8 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
         ...settings,
         orderEmail: "orders@example.com",
         specials: [
-          { id: "special-pie", text: "Homemade steak pie — £12.95", active: true, sortOrder: 0 },
-          { id: "special-hidden", text: "Hidden test special", active: false, sortOrder: 1 },
+          { id: "special-pie", text: "Homemade steak pie", pricePence: 1295, active: true, sortOrder: 0 },
+          { id: "special-hidden", text: "Hidden test special", pricePence: 995, active: false, sortOrder: 1 },
         ],
       }),
     }, true);
@@ -138,8 +138,8 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     const publicMenu = await request("/api/menu");
     assert.equal(publicMenu.status, 200);
     const publicSettings = await publicMenu.json();
-    assert.deepEqual(publicSettings.specials.map((special) => special.text), [
-      "Homemade steak pie — £12.95",
+    assert.deepEqual(publicSettings.specials.map(({ text, pricePence }) => ({ text, pricePence })), [
+      { text: "Homemade steak pie", pricePence: 1295 },
     ]);
     const blocked = await request("/api/menu", { method: "POST", headers: { origin: "https://another.example" } }, true);
     assert.equal(blocked.status, 403);
@@ -152,7 +152,7 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     service: "takeaway", mealDate: sunday.toISOString().slice(0, 10), timeSlot: "12:15",
     customerName: "Local test customer", email: "customer@example.com", phone: "00000000000",
     allergenAcknowledged: true,
-    meals: [{ mealType: "adult", meat: "chicken", quantity: 1 }], extras: [],
+    meals: [{ mealType: "adult", meat: "chicken", quantity: 1 }], specials: [], extras: [],
   };
   await t.test("an order is stored locally; seen-order clearing preserves unseen orders", async () => {
     for (let i = 0; i < 2; i++) {
@@ -172,6 +172,37 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     assert.equal((await cleared.json()).count, 1);
     const remaining = await request("/api/orders", {}, true);
     assert.equal((await remaining.json()).orders.length, 1);
+  });
+
+  await t.test("a priced special follows the normal checkout without requiring a roast", async () => {
+    const response = await request("/api/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        ...order,
+        meals: [],
+        specials: [{ id: "special-pie", quantity: 2, pricePence: 1 }],
+      }),
+    });
+    assert.equal(response.status, 201, await response.clone().text());
+    const { order: placed } = await response.json();
+    assert.equal(placed.totalPence, 2590, "the saved menu price is authoritative");
+
+    const list = await request("/api/orders", {}, true);
+    const { orders } = await list.json();
+    const saved = orders.find((item) => item.reference === placed.reference);
+    assert.ok(saved);
+    assert.deepEqual(saved.lines.meals, []);
+    assert.equal(saved.lines.specials.length, 1);
+    assert.equal(saved.lines.specials[0].name, "Homemade steak pie");
+    assert.equal(saved.lines.specials[0].unitPricePence, 1295);
+
+    const removed = await request(
+      "/api/orders",
+      { method: "DELETE", body: JSON.stringify({ id: saved.id }) },
+      true,
+    );
+    assert.equal(removed.status, 200);
+    await removed.text();
   });
 
   await t.test("sold-out meat is rejected while other meats remain available", async () => {

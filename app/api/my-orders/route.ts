@@ -4,6 +4,15 @@ import { getDb } from "@/db";
 import { orders as ordersTable } from "@/db/schema";
 import type { OrderLines, OrderStatus, ServiceType } from "@/lib/order-types";
 
+function parseOrderLines(value: string): OrderLines {
+  const parsed = JSON.parse(value) as Partial<OrderLines>;
+  return {
+    meals: Array.isArray(parsed.meals) ? parsed.meals : [],
+    specials: Array.isArray(parsed.specials) ? parsed.specials : [],
+    extras: Array.isArray(parsed.extras) ? parsed.extras : [],
+  };
+}
+
 export async function GET(request: Request) {
   const user = await getChatGPTUser(request);
   if (!user) {
@@ -34,7 +43,7 @@ export async function GET(request: Request) {
         ...row,
         service: row.service as ServiceType,
         status: row.status as OrderStatus,
-        lines: JSON.parse(row.lineItems) as OrderLines,
+        lines: parseOrderLines(row.lineItems),
       })),
     });
   } catch {
