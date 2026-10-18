@@ -359,10 +359,10 @@ export function OrderMenu() {
             </div>
             <p className="text-center text-sm leading-6 text-[#685c54]">
               {confirmation.emailStatus === "sent"
-                ? "Your order has been saved and emailed to the Percy Arms."
+                ? "Your order is confirmed. We’ve emailed you a copy, and the Percy Arms has received it too."
                 : confirmation.emailStatus === "awaiting_setup"
                   ? "Your order is safely saved in the pub’s admin inbox. Automatic email is awaiting final setup."
-                  : "Your order is safely saved in the pub’s admin inbox, but the email copy could not be sent."}
+                  : "Your order is safely saved in the pub’s admin inbox, but the confirmation email could not be sent."}
             </p>
             <Button
               type="button"
