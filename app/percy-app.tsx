@@ -1,6 +1,13 @@
 "use client";
 
-import { CalendarDays, Shield, ShoppingBag } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  MapPin,
+  Shield,
+  ShoppingBag,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "./components/admin-panel";
@@ -20,37 +27,45 @@ export function PercyApp({
   initialTab = "order",
 }: PercyAppProps) {
   return (
-    <main className="min-h-screen bg-[#f2f7f5] text-[#18201f]">
-      <header className="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-[#0f3934] via-[#15564e] to-[#20766b] text-white">
-        <div className="pointer-events-none absolute -right-16 -top-24 size-64 rounded-full bg-[#f4c95d]/15 blur-2xl" />
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+    <main className="site-shell min-h-screen text-[#17211f]">
+      <header className="pub-header relative overflow-hidden text-white">
+        <div className="pointer-events-none absolute -left-20 -top-28 size-72 rounded-full bg-[#d9ad5b]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-36 size-80 rounded-full bg-[#93b7a8]/10 blur-3xl" />
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-2xl border border-white/30 bg-[#f4c95d] font-serif text-xl font-black text-[#123c37] shadow-lg shadow-black/10">
-              PA
+            <div className="relative grid size-12 place-items-center rounded-full border border-[#e7c67d]/60 bg-[#d9ad5b] font-serif text-lg font-black text-[#102f2a] shadow-[0_8px_28px_rgba(0,0,0,0.18)]">
+              <span className="absolute inset-1 rounded-full border border-[#102f2a]/25" />
+              <span className="relative">PA</span>
             </div>
             <div>
-              <p className="font-serif text-xl font-bold leading-none">
+              <p className="font-serif text-xl font-bold leading-none tracking-[-0.02em] sm:text-2xl">
                 The Percy Arms
               </p>
-              <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#d6f0e9]">
-                Blyth · Sunday Lunch
+              <p className="mt-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-[#c6d8d1]">
+                Blyth · Kitchen &amp; Bar
               </p>
             </div>
           </div>
-          <Badge className="hidden border border-white/20 bg-white/12 px-3 py-1 text-white shadow-sm backdrop-blur sm:inline-flex">
-            <ShoppingBag /> Order & collect
-          </Badge>
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 text-xs text-[#dbe7e2] md:flex">
+              <span className="size-2 rounded-full bg-[#8fd6a4] shadow-[0_0_0_4px_rgba(143,214,164,0.12)]" />
+              Sunday orders open
+            </div>
+            <Badge className="border border-white/15 bg-white/10 px-3 py-1.5 text-white shadow-sm backdrop-blur-md">
+              <ShoppingBag /> <span className="hidden sm:inline">Order &amp; collect</span><span className="sm:hidden">Order</span>
+            </Badge>
+          </div>
         </div>
       </header>
 
       {isAdmin ? (
         <Tabs defaultValue={initialTab} className="gap-0">
-          <div className="sticky top-0 z-30 border-b border-[#cbdcd6] bg-[#f2f7f5]/90 px-3 py-3 shadow-sm backdrop-blur-xl sm:px-6">
-            <TabsList className="mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-2xl border border-[#d5e4df] bg-white p-1 shadow-sm">
-              <TabsTrigger value="order" className="rounded-xl text-xs sm:text-sm">
+          <div className="sticky top-0 z-30 border-b border-[#d9ddd8]/80 bg-[#f7f5ef]/88 px-3 py-3 shadow-[0_8px_30px_rgba(20,48,43,0.05)] backdrop-blur-xl sm:px-6">
+            <TabsList className="mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-full border border-[#d7ded9] bg-white/90 p-1 shadow-[0_6px_24px_rgba(20,48,43,0.07)]">
+              <TabsTrigger value="order" className="rounded-full text-xs data-[state=active]:bg-[#153f38] data-[state=active]:text-white sm:text-sm">
                 <CalendarDays /> <span>Order</span>
               </TabsTrigger>
-              <TabsTrigger value="admin" className="rounded-xl text-xs sm:text-sm">
+              <TabsTrigger value="admin" className="rounded-full text-xs data-[state=active]:bg-[#153f38] data-[state=active]:text-white sm:text-sm">
                 <Shield /> <span>Admin</span>
               </TabsTrigger>
             </TabsList>
@@ -65,19 +80,29 @@ export function PercyApp({
       ) : (
         <OrderMenu />
       )}
-      <footer className="mt-10 border-t border-[#d5e4df] bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-[#60716d] sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div>
-            <p className="font-serif text-lg font-bold text-[#123c37]">The Percy Arms</p>
-            <p>Blyth, Northumberland</p>
+      <footer className="mt-12 bg-[#102f2a] text-[#c8d7d1]">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:grid-cols-[1.1fr_0.9fr] sm:px-6 lg:px-8">
+          <div className="max-w-md">
+            <div className="flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-full bg-[#d9ad5b] font-serif font-black text-[#102f2a]">PA</div>
+              <p className="font-serif text-xl font-bold text-white">The Percy Arms</p>
+            </div>
+            <p className="mt-4 leading-6 text-[#aebfba]">
+              Proper Sunday lunches, served with a warm Northumberland welcome.
+            </p>
           </div>
-          <div className="sm:text-right">
-            <p className="font-semibold text-[#18201f]">Sunday lunches · 11:30am–5pm</p>
-            <p>Dine in or order for collection</p>
+          <div className="grid gap-3 sm:justify-self-end sm:text-right">
+            <p className="inline-flex items-center gap-2 sm:justify-end">
+              <MapPin className="size-4 text-[#d9ad5b]" /> Blyth, Northumberland
+            </p>
+            <p className="inline-flex items-center gap-2 font-semibold text-white sm:justify-end">
+              <Clock3 className="size-4 text-[#d9ad5b]" /> Sundays · 11:30am–5pm
+            </p>
             <a
               href={isAdmin ? signOutPath : signInPath}
-              className="mt-2 inline-block text-xs font-semibold text-[#123c37] underline underline-offset-4"
+              className="mt-2 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e7c67d] underline decoration-white/30 underline-offset-4 sm:justify-end"
             >
+              <Sparkles className="size-3.5" />
               {isAdmin ? "Admin sign out" : "Admin sign in"}
             </a>
           </div>
