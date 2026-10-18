@@ -4,8 +4,10 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Baby,
+  CalendarCheck,
   Check,
   ChevronRight,
+  ChefHat,
   Clock3,
   ExternalLink,
   Info,
@@ -18,6 +20,7 @@ import {
   Sparkles,
   Trash2,
   UtensilsCrossed,
+  WalletCards,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -332,15 +335,15 @@ export function OrderMenu() {
   if (confirmation) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <Card className="overflow-hidden rounded-[1.75rem] border-0 bg-white py-0 shadow-[0_18px_55px_rgba(55,37,25,0.12)]">
-          <div className="bg-[#edf3e9] px-6 py-9 text-center">
-            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[#34543c] text-white">
+        <Card className="surface-card overflow-hidden rounded-[2rem] py-0 shadow-[0_22px_70px_rgba(23,47,42,0.14)]">
+          <div className="bg-gradient-to-br from-[#e8efeb] to-[#f7f1e5] px-6 py-10 text-center">
+            <div className="mx-auto grid size-16 place-items-center rounded-full bg-[#153f38] text-white shadow-lg shadow-[#153f38]/20">
               <Check className="size-8" strokeWidth={3} />
             </div>
-            <p className="mt-5 text-sm font-bold uppercase tracking-[0.16em] text-[#58715d]">
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-[#58715d]">
               Order received
             </p>
-            <h2 className="mt-2 font-serif text-4xl font-bold text-[#25382a]">
+            <h2 className="mt-2 font-serif text-4xl font-bold tracking-[-0.035em] text-[#25382a]">
               We’ll see you Sunday
             </h2>
             <p className="mt-3 font-mono text-2xl font-black tracking-widest text-[#123c37]">
@@ -348,7 +351,7 @@ export function OrderMenu() {
             </p>
           </div>
           <CardContent className="space-y-5 px-6 py-7 sm:px-9">
-            <div className="flex items-center justify-between rounded-2xl bg-[#f4f8f6] p-5">
+            <div className="flex items-center justify-between rounded-2xl border border-[#dfe6e1] bg-[#f8faf8] p-5">
               <span className="font-semibold">Total to pay at the pub</span>
               <strong className="text-2xl text-[#123c37]">
                 {money(confirmation.totalPence)}
@@ -377,8 +380,8 @@ export function OrderMenu() {
 
   return (
     <>
-      <section className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
-        <div className="relative min-h-64 overflow-hidden rounded-[1.75rem] bg-[#123c37] text-white shadow-[0_20px_60px_rgba(18,60,55,0.22)]">
+      <section className="mx-auto max-w-7xl px-4 pb-24 pt-5 sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
+        <div className="gentle-rise relative min-h-[25rem] overflow-hidden rounded-[2rem] bg-[#102f2a] text-white shadow-[0_28px_80px_rgba(16,47,42,0.24)] sm:min-h-[31rem]">
           <Image
             src="/sunday-roast.png"
             unoptimized
@@ -386,50 +389,80 @@ export function OrderMenu() {
             fill
             priority
             sizes="(min-width: 1024px) 1152px, 100vw"
-            className="object-cover"
+            className="object-cover object-[64%_center] sm:object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0b2d29]/95 via-[#123c37]/80 to-[#20766b]/30" />
-          <div className="relative max-w-xl p-6 sm:p-9">
-            <Badge className="bg-[#f4c95d] text-[#123c37]">
-              Order like your favourite takeaway app
+          <div className="absolute inset-0 bg-gradient-to-r from-[#092823]/95 via-[#102f2a]/78 to-[#102f2a]/18" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#092823]/80 via-transparent to-black/10" />
+          <div className="relative flex min-h-[25rem] max-w-2xl flex-col justify-end p-6 sm:min-h-[31rem] sm:p-10 lg:p-12">
+            <Badge className="w-fit border border-[#f2d89f]/35 bg-[#d9ad5b] px-3 py-1.5 text-[#102f2a] shadow-lg shadow-black/10">
+              <Sparkles /> Made in Blyth · Every Sunday
             </Badge>
-            <h1 className="mt-5 font-serif text-4xl font-bold leading-tight sm:text-5xl">
-              Build your Sunday lunch
+            <h1 className="mt-5 max-w-xl font-serif text-[2.75rem] font-bold leading-[0.98] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
+              Sunday lunch, made properly.
             </h1>
-            <p className="mt-3 leading-7 text-[#f6ead5]">
-              Choose a Sunday roast or one of this week’s specials, add extras
-              and check your basket before ordering.
+            <p className="mt-5 max-w-lg text-base leading-7 text-[#e4ede9] sm:text-lg">
+              Choose your roast, add a little extra and we’ll have everything
+              ready for your table or collection.
             </p>
-            <div className="mt-5 flex flex-wrap gap-4 text-sm text-[#f6ead5]">
-              <span className="inline-flex items-center gap-2">
-                <MapPin className="size-4 text-[#f4c95d]" /> Percy Arms, Blyth
+            <div className="mt-6 flex flex-wrap gap-2 text-sm text-[#f4f8f6]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/15 px-3.5 py-2 backdrop-blur-sm">
+                <MapPin className="size-4 text-[#e7c67d]" /> Percy Arms, Blyth
               </span>
-              <span className="inline-flex items-center gap-2">
-                <Clock3 className="size-4 text-[#f4c95d]" /> Sundays, 11:30am–5pm
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/15 px-3.5 py-2 backdrop-blur-sm">
+                <Clock3 className="size-4 text-[#e7c67d]" /> 11:30am–5pm
               </span>
+            </div>
+          </div>
+          <div className="absolute bottom-8 right-8 hidden w-56 rounded-2xl border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur-md lg:block">
+            <div className="flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-full bg-[#d9ad5b] text-[#102f2a]">
+                <WalletCards className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Pay at the pub</p>
+                <p className="mt-0.5 text-xs text-[#d6e2dd]">Simple, no online payment</p>
+              </div>
             </div>
           </div>
         </div>
 
+        <div className="gentle-rise mx-auto -mt-5 grid max-w-3xl grid-cols-3 overflow-hidden rounded-2xl border border-[#d9ded9] bg-white/95 shadow-[0_16px_44px_rgba(23,47,42,0.10)] backdrop-blur sm:-mt-7">
+          {[
+            ["1", "Choose a time"],
+            ["2", "Build your meal"],
+            ["3", "Place your order"],
+          ].map(([step, label], index) => (
+            <div
+              key={step}
+              className={`flex min-h-16 items-center justify-center gap-2 px-2 text-center text-[0.68rem] font-bold text-[#51635f] sm:text-sm ${index > 0 ? "border-l border-[#e2e6e2]" : ""}`}
+            >
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#e8efeb] text-[0.65rem] font-black text-[#153f38] sm:size-7 sm:text-xs">
+                {step}
+              </span>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+
         {!menu.configured && (
-          <div className="mt-5 rounded-2xl border border-[#e4c97e] bg-[#fff8df] px-5 py-4 text-sm leading-6 text-[#614b1f]">
+          <div className="mt-6 rounded-2xl border border-[#d9ad5b]/45 bg-[#fff8e8] px-5 py-4 text-sm leading-6 text-[#624b20] shadow-sm">
             <strong>Ordering setup required:</strong> the admin needs to confirm
             prices and the order email before customers can check out.
           </div>
         )}
         {menu.configured && !menu.orderingOpen && (
-          <div className="mt-5 rounded-2xl border border-[#ef6a52]/30 bg-[#fff2ee] px-5 py-4 text-sm leading-6 text-[#7b3024]">
+          <div className="mt-6 rounded-2xl border border-[#b95d49]/25 bg-[#fff1ed] px-5 py-4 text-sm leading-6 text-[#7b3024] shadow-sm">
             <strong>Online ordering is currently closed.</strong>{" "}
             {menu.serviceMessage || "Please check back soon or contact the pub for help."}
           </div>
         )}
         {menu.orderingOpen && menu.serviceMessage && (
-          <div className="mt-5 rounded-2xl border border-[#146f63]/20 bg-[#e5f2ee] px-5 py-4 text-sm leading-6 text-[#123c37]">
+          <div className="mt-6 rounded-2xl border border-[#153f38]/15 bg-[#e8efeb] px-5 py-4 text-sm leading-6 text-[#102f2a] shadow-sm">
             {menu.serviceMessage}
           </div>
         )}
         {menu.orderingOpen && soldOutMeats.length > 0 && (
-          <div className="mt-5 rounded-2xl border border-[#ef6a52]/30 bg-[#fff2ee] px-5 py-4 text-sm leading-6 text-[#7b3024]">
+          <div className="mt-6 rounded-2xl border border-[#b95d49]/25 bg-[#fff1ed] px-5 py-4 text-sm leading-6 text-[#7b3024] shadow-sm">
             <strong>
               {soldOutMeats.map((meat) => `${meat[0].toUpperCase()}${meat.slice(1)}`).join(", ")} {soldOutMeats.length === 1 ? "is" : "are"} sold out.
             </strong>{" "}
@@ -441,43 +474,43 @@ export function OrderMenu() {
 
         {menu.specials.length > 0 && (
           <section
-            className="mt-5 overflow-hidden rounded-[1.5rem] border border-[#f4c95d]/55 bg-[#123c37] text-white shadow-[0_14px_34px_rgba(18,60,55,0.18)]"
+            className="mt-8 overflow-hidden rounded-[1.75rem] border border-[#d9ad5b]/25 bg-[#102f2a] text-white shadow-[0_22px_60px_rgba(16,47,42,0.16)]"
             aria-labelledby="specials-heading"
           >
-            <div className="flex items-center gap-3 border-b border-white/15 px-5 py-4 sm:px-6">
-              <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f4c95d] text-[#123c37]">
+            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5 sm:px-7">
+              <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#d9ad5b] text-[#102f2a] shadow-lg shadow-black/10">
                 <Sparkles className="size-5" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f4c95d]">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#e7c67d]">
                   From the kitchen
                 </p>
-                <h2 id="specials-heading" className="font-serif text-2xl font-bold">
+                <h2 id="specials-heading" className="mt-1 font-serif text-2xl font-bold tracking-[-0.02em] sm:text-3xl">
                   This week’s specials
                 </h2>
               </div>
             </div>
-            <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+            <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
               {menu.specials.map((special) => {
                 const quantity =
                   cartSpecials.find((item) => item.id === special.id)?.quantity ?? 0;
                 return (
                   <article
                     key={special.id}
-                    className="flex flex-col justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 shadow-inner"
+                    className="flex flex-col justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.07] px-5 py-5 shadow-inner backdrop-blur-sm transition-colors hover:bg-white/[0.1]"
                   >
                     <div>
                       <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-[#fff9e9]">
                         {special.text}
                       </p>
-                      <p className="mt-2 text-lg font-black text-[#f4c95d]">
+                      <p className="mt-3 text-lg font-black text-[#e7c67d]">
                         {money(special.pricePence)}
                       </p>
                     </div>
                     {quantity === 0 ? (
                       <Button
                         type="button"
-                        className="w-full rounded-xl bg-[#f4c95d] font-bold text-[#123c37] hover:bg-[#f8d87f]"
+                        className="h-11 w-full rounded-xl bg-[#d9ad5b] font-bold text-[#102f2a] shadow-md shadow-black/10 hover:bg-[#e7c67d]"
                         onClick={() => addSpecial(special.id)}
                         disabled={!menu.configured || !menu.orderingOpen}
                       >
@@ -518,13 +551,13 @@ export function OrderMenu() {
           </section>
         )}
 
-        <aside className="mt-5 rounded-2xl border border-[#e4c35a] bg-[#fff9df] p-5 text-[#564317]" aria-labelledby="allergen-heading">
+        <aside className="mt-6 rounded-2xl border border-[#d9ad5b]/40 bg-[#fff9e8] p-5 text-[#564317] shadow-sm" aria-labelledby="allergen-heading">
           <div className="flex gap-3">
-            <div className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-[#f4c95d] text-[#123c37]">
+            <div className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-[#d9ad5b] text-[#102f2a]">
               <Info className="size-5" />
             </div>
             <div>
-              <h2 id="allergen-heading" className="font-serif text-xl font-bold">Food allergies and intolerances</h2>
+              <h2 id="allergen-heading" className="font-serif text-xl font-bold tracking-[-0.01em]">Food allergies and intolerances</h2>
               <p className="mt-2 text-sm leading-6">
                 The Food Standards Agency says allergen information must be available before an online food order is completed and again when the food is supplied.
               </p>
@@ -535,7 +568,7 @@ export function OrderMenu() {
                 href="https://www.gov.uk/food-allergies"
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#123c37] underline underline-offset-4"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#153f38] underline underline-offset-4"
               >
                 Read the Food Standards Agency guidance <ExternalLink className="size-4" />
               </a>
@@ -543,13 +576,19 @@ export function OrderMenu() {
           </div>
         </aside>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">
-          <div className="space-y-6">
-            <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+        <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start">
+          <div className="space-y-8">
+            <Card className="surface-card gap-0 py-0">
               <CardHeader>
-                <CardTitle className="font-serif text-2xl">1. When and how?</CardTitle>
+                <div className="flex items-center gap-3">
+                  <span className="section-number">1</span>
+                  <div>
+                    <p className="section-kicker"><CalendarCheck className="size-3.5" /> Plan your visit</p>
+                    <CardTitle className="mt-1 font-serif text-2xl tracking-[-0.02em] sm:text-3xl">When and how?</CardTitle>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="space-y-5 pb-6">
                 <RadioGroup
                   value={service}
                   onValueChange={(value) => {
@@ -585,7 +624,7 @@ export function OrderMenu() {
                     <Select value={mealDate} onValueChange={setMealDate}>
                       <SelectTrigger
                         id="order-date"
-                        className="h-12 w-full rounded-xl bg-[#fcfaf6]"
+                        className="field-shell h-12 w-full rounded-xl"
                       >
                         <SelectValue placeholder="Choose a Sunday" />
                       </SelectTrigger>
@@ -605,7 +644,7 @@ export function OrderMenu() {
                     <Select value={timeSlot} onValueChange={setTimeSlot}>
                       <SelectTrigger
                         id="order-time"
-                        className="h-12 w-full rounded-xl bg-[#fcfaf6]"
+                        className="field-shell h-12 w-full rounded-xl"
                       >
                         <SelectValue placeholder="Choose a time" />
                       </SelectTrigger>
@@ -623,12 +662,15 @@ export function OrderMenu() {
             </Card>
 
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#df654d]">
-                Sunday menu
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold">
-                2. Choose your meals
-              </h2>
+              <div className="flex items-center gap-3">
+                <span className="section-number">2</span>
+                <div>
+                  <p className="section-kicker"><ChefHat className="size-3.5" /> Sunday menu</p>
+                  <h2 className="mt-1 font-serif text-3xl font-bold tracking-[-0.03em]">
+                    Choose your meals
+                  </h2>
+                </div>
+              </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {([
                   {
@@ -650,27 +692,27 @@ export function OrderMenu() {
                   return (
                     <Card
                       key={meal.type}
-                      className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]"
+                      className="surface-card surface-card-interactive overflow-hidden"
                     >
                       <CardHeader>
                         <div className="flex items-start justify-between gap-4">
-                          <div className="grid size-11 place-items-center rounded-full bg-[#e5f2ee] text-[#146f63]">
+                          <div className="grid size-11 place-items-center rounded-full bg-[#e8efeb] text-[#153f38]">
                             <Icon />
                           </div>
-                          <strong className="text-xl text-[#123c37]">
+                          <strong className="rounded-full bg-[#f4efe4] px-3 py-1.5 text-lg text-[#153f38]">
                             {money(meal.price)}
                           </strong>
                         </div>
-                        <CardTitle className="font-serif text-2xl">
+                        <CardTitle className="font-serif text-2xl tracking-[-0.02em]">
                           {meal.title}
                         </CardTitle>
-                        <p className="text-sm leading-6 text-[#6e625a]">
+                        <p className="text-sm leading-6 text-[#61706c]">
                           {meal.detail}
                         </p>
                       </CardHeader>
                       <CardContent>
                         <Button
-                          className="h-11 w-full rounded-xl bg-[#123c37] hover:bg-[#1d5a52]"
+                          className="h-11 w-full rounded-xl bg-[#153f38] shadow-md shadow-[#153f38]/10 hover:bg-[#235c52]"
                           onClick={() => openMeal(meal.type)}
                           disabled={!menu.configured || !menu.orderingOpen || availableMeats.length === 0}
                         >
@@ -684,22 +726,25 @@ export function OrderMenu() {
             </div>
 
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#df654d]">
-                Make it yours
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-bold">3. Add extras</h2>
-              <Card className="mt-4 gap-0 overflow-hidden border-0 bg-white py-0 shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+              <div className="flex items-center gap-3">
+                <span className="section-number">3</span>
+                <div>
+                  <p className="section-kicker"><Plus className="size-3.5" /> Make it yours</p>
+                  <h2 className="mt-1 font-serif text-3xl font-bold tracking-[-0.03em]">Add extras</h2>
+                </div>
+              </div>
+              <Card className="surface-card mt-4 gap-0 overflow-hidden py-0">
                 {menu.extras.map((extra, index) => {
                   const quantity =
                     cartExtras.find((item) => item.id === extra.id)?.quantity ?? 0;
                   return (
                     <div
                       key={extra.id}
-                      className={`flex items-center justify-between gap-4 p-5 ${index > 0 ? "border-t border-[#eee6da]" : ""}`}
+                      className={`flex items-center justify-between gap-4 p-5 transition-colors hover:bg-[#fafbf8] ${index > 0 ? "border-t border-[#e7e9e5]" : ""}`}
                     >
                       <div>
                         <p className="font-semibold">{extra.name}</p>
-                        <p className="mt-1 font-bold text-[#df654d]">
+                        <p className="mt-1 font-bold text-[#a35f34]">
                           {money(extra.pricePence)}
                         </p>
                       </div>
@@ -707,7 +752,7 @@ export function OrderMenu() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="rounded-full border-[#123c37]/20 text-[#123c37]"
+                          className="rounded-full border-[#153f38]/20 bg-[#f8faf8] text-[#153f38] hover:bg-[#e8efeb]"
                           onClick={() => addExtra(extra.id)}
                           disabled={!menu.configured || !menu.orderingOpen}
                         >
@@ -742,13 +787,13 @@ export function OrderMenu() {
             </div>
           </div>
 
-          <Card className="border-0 bg-white shadow-[0_16px_42px_rgba(55,37,25,0.12)] lg:sticky lg:top-24">
-            <CardHeader className="border-b border-[#eee6da]">
+          <Card className="surface-card overflow-hidden lg:sticky lg:top-24">
+            <CardHeader className="border-b border-[#e5e9e5] bg-[#fbfcfa]">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-                  <ShoppingBag className="text-[#df654d]" /> Your basket
+                <CardTitle className="flex items-center gap-2 font-serif text-2xl tracking-[-0.02em]">
+                  <ShoppingBag className="text-[#a35f34]" /> Your basket
                 </CardTitle>
-                <Badge className="bg-[#e5f2ee] text-[#123c37]">
+                <Badge className="bg-[#e8efeb] text-[#153f38]">
                   {mealCount + specialCount + extraCount} items
                 </Badge>
               </div>
@@ -757,8 +802,10 @@ export function OrderMenu() {
               {cartMeals.length === 0 &&
                 cartSpecials.length === 0 &&
                 cartExtras.length === 0 && (
-                <div className="py-8 text-center text-sm leading-6 text-[#81736a]">
-                  <ReceiptText className="mx-auto mb-3 size-9 opacity-50" />
+                <div className="rounded-2xl border border-dashed border-[#d4ddd8] bg-[#fafbf9] px-5 py-8 text-center text-sm leading-6 text-[#73807c]">
+                  <div className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-[#e8efeb] text-[#153f38]">
+                    <ReceiptText className="size-5" />
+                  </div>
                   Your chosen meals, specials and extras will appear here.
                 </div>
               )}
@@ -895,7 +942,7 @@ export function OrderMenu() {
 
               <div className="flex items-center justify-between border-t border-[#ded2c4] pt-4">
                 <span className="text-lg font-bold">Total</span>
-                <strong className="text-2xl text-[#123c37]">{money(totalPence)}</strong>
+                      <strong className="text-2xl text-[#153f38]">{money(totalPence)}</strong>
               </div>
               {submitError && !checkoutOpen && (
                 <p
@@ -906,7 +953,7 @@ export function OrderMenu() {
                 </p>
               )}
               <Button
-                className="h-13 w-full rounded-xl bg-[#123c37] text-base font-bold shadow-lg shadow-[#123c37]/15 hover:bg-[#1d5a52]"
+                className="h-13 w-full rounded-xl bg-[#153f38] text-base font-bold shadow-lg shadow-[#153f38]/15 hover:bg-[#235c52]"
                 onClick={beginCheckout}
                 disabled={
                   !menu.configured ||
@@ -924,13 +971,37 @@ export function OrderMenu() {
         </div>
       </section>
 
+      {mealCount + specialCount + extraCount > 0 ? (
+        <div className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-white/15 bg-[#102f2a]/95 p-2.5 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1 pl-2">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#c6d8d1]">
+                {mealCount + specialCount + extraCount} items
+              </p>
+              <p className="text-lg font-black">{money(totalPence)}</p>
+            </div>
+            <Button
+              className="h-12 rounded-xl bg-[#d9ad5b] px-5 font-bold text-[#102f2a] hover:bg-[#e7c67d]"
+              onClick={beginCheckout}
+              disabled={
+                !menu.configured ||
+                !menu.orderingOpen ||
+                (cartMeals.length === 0 && cartSpecials.length === 0)
+              }
+            >
+              Checkout <ChevronRight />
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <Dialog
         open={selectedMealType !== null}
         onOpenChange={(open) => {
           if (!open) setSelectedMealType(null);
         }}
       >
-        <DialogContent className="rounded-2xl sm:max-w-lg">
+        <DialogContent className="rounded-[1.75rem] border-[#d9ded9] bg-[#fffefa] shadow-[0_28px_90px_rgba(16,47,42,0.24)] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl">
               {selectedMealType === "child"
@@ -964,7 +1035,7 @@ export function OrderMenu() {
                 ))}
               </RadioGroup>
             </fieldset>
-            <div className="flex items-center justify-between rounded-2xl bg-[#faf7f1] p-4">
+            <div className="flex items-center justify-between rounded-2xl border border-[#e1e5e0] bg-[#f7f5ef] p-4">
               <div>
                 <p className="font-semibold">Quantity</p>
                 <p className="mt-1 text-sm text-[#75685f]">
@@ -1007,7 +1078,7 @@ export function OrderMenu() {
           </div>
           <DialogFooter>
             <Button
-              className="h-12 w-full bg-[#123c37] hover:bg-[#1d5a52]"
+              className="h-12 w-full rounded-xl bg-[#153f38] hover:bg-[#235c52]"
               onClick={addMeal}
               disabled={!availableMeats.includes(selectedMeat)}
             >
@@ -1023,7 +1094,7 @@ export function OrderMenu() {
       </Dialog>
 
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[1.75rem] border-[#d9ded9] bg-[#fffefa] shadow-[0_28px_90px_rgba(16,47,42,0.24)] sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="font-serif text-3xl">Checkout</DialogTitle>
             <DialogDescription>
@@ -1039,7 +1110,7 @@ export function OrderMenu() {
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-4" onSubmit={submitOrder}>
-            <div className="rounded-2xl bg-[#faf7f1] p-4">
+            <div className="rounded-2xl border border-[#e1e5e0] bg-[#f7f5ef] p-4">
               <div className="flex justify-between text-sm">
                 <span>
                   {mealCount} meal{mealCount === 1 ? "" : "s"}
@@ -1058,7 +1129,7 @@ export function OrderMenu() {
                   name="customerName"
                   autoComplete="name"
                   required
-                  className="h-11 rounded-xl"
+                  className="field-shell h-11 rounded-xl"
                 />
               </div>
               <div className="space-y-2">
@@ -1069,7 +1140,7 @@ export function OrderMenu() {
                   type="tel"
                   autoComplete="tel"
                   required
-                  className="h-11 rounded-xl"
+                  className="field-shell h-11 rounded-xl"
                 />
               </div>
             </div>
@@ -1081,7 +1152,7 @@ export function OrderMenu() {
                 type="email"
                 autoComplete="email"
                 required
-                className="h-11 rounded-xl"
+                className="field-shell h-11 rounded-xl"
               />
             </div>
             <div className="rounded-2xl border border-[#e4c35a] bg-[#fff9df] p-4">
@@ -1106,7 +1177,7 @@ export function OrderMenu() {
                 id="checkout-notes"
                 name="notes"
                 placeholder="High chair, access needs or food allergy details"
-                className="min-h-24 rounded-xl"
+                className="field-shell min-h-24 rounded-xl"
               />
             </div>
             {submitError && (
@@ -1119,7 +1190,7 @@ export function OrderMenu() {
             )}
             <Button
               type="submit"
-              className="h-13 w-full rounded-xl bg-[#123c37] text-base font-bold hover:bg-[#1d5a52]"
+              className="h-13 w-full rounded-xl bg-[#153f38] text-base font-bold shadow-lg shadow-[#153f38]/15 hover:bg-[#235c52]"
               disabled={submitting || !allergenConfirmed}
             >
               {submitting ? (
