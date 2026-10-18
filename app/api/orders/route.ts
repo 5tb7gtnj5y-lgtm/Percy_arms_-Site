@@ -164,7 +164,8 @@ async function sendEmail(args: {
   text: string;
   idempotencyKey: string;
 }) {
-  try {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -181,10 +182,34 @@ async function sendEmail(args: {
       }),
     });
 
-    return response.ok;
-  } catch {
-    return false;
+    if (response.ok) return null;
+    const result = await response.json().catch(() => ({})) as { message?: string; name?: string };
+    const message = String(result.message ?? "");
+    if ((response.status === 429 || response.status >= 500) && attempt < 2) {
+      const retryAfter = Number(response.headers.get("retry-after"));
+      await new Promise((resolve) => setTimeout(resolve,
+        Math.min(5000, Math.max(1000 * 2 ** attempt, Number.isFinite(retryAfter) ? retryAfter * 1000 : 0))));
+      continue;
+    }
+    if (/testing emails|own email address|verify a domain|domain.*not verified/i.test(message)) {
+      return "Resend requires a verified sending domain. Verify the domain in Resend and set RESEND_FROM_EMAIL to an address on that domain; the test sender cannot email customers.";
+    }
+    if (response.status === 401 || /api.?key|restricted/i.test(message)) {
+      return "The Resend API key is invalid or lacks permission for the sender domain. Check RESEND_API_KEY in Cloudflare.";
+    }
+    if (/quota|daily.*limit|monthly.*limit/i.test(message)) {
+      return "The Resend sending allowance has been reached. Check the sending limits in Resend.";
+    }
+    return `Resend rejected the email (HTTP ${response.status}). Check the email request in the Resend dashboard.`;
+    } catch {
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+        continue;
+      }
+      return "The email provider could not be reached after three attempts.";
+    }
   }
+  return "The email provider could not be reached.";
 }
 
 async function sendOrderEmails(args: {
@@ -203,7 +228,7 @@ async function sendOrderEmails(args: {
     return "awaiting_setup" as const;
   }
 
-  const pubSent = await sendEmail({
+  const pubError = await sendEmail({
     apiKey: runtimeEnv.RESEND_API_KEY,
     from: runtimeEnv.RESEND_FROM_EMAIL,
     to: args.pubEmail,
@@ -212,7 +237,7 @@ async function sendOrderEmails(args: {
     text: args.pubText,
     idempotencyKey: `${args.reference}-pub-order`,
   });
-  const customerSent = await sendEmail({
+  const customerError = await sendEmail({
     apiKey: runtimeEnv.RESEND_API_KEY,
     from: runtimeEnv.RESEND_FROM_EMAIL,
     to: args.customerEmail,
@@ -222,7 +247,10 @@ async function sendOrderEmails(args: {
     idempotencyKey: `${args.reference}-customer-confirmation`,
   });
 
-  return pubSent && customerSent ? ("sent" as const) : ("failed" as const);
+  if (!pubError && !customerError) return "sent";
+  const reason = [pubError && `Pub: ${pubError}`, customerError && `Customer: ${customerError}`].filter(Boolean).join(" ");
+  console.error("order_email_failed", { reference: args.reference, reason });
+  return `failed: ${reason}`;
 }
 
 export async function GET(request: Request) {
@@ -264,6 +292,25 @@ export async function PATCH(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const id = orderId(body.id);
+    if (id !== null && body.retryEmails === true) {
+      const db = getDb();
+      const [row] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+      if (!row) return Response.json({ error: "Order not found." }, { status: 404 });
+      if (row.emailStatus === "sent") {
+        return Response.json({ order: { id, emailStatus: row.emailStatus } });
+      }
+      const config = await loadOrderConfig();
+      const details = { ...row, service: row.service as ServiceType, lines: parseOrderLines(row.lineItems) };
+      const emailStatus = await sendOrderEmails({
+        pubEmail: row.orderEmail || config.orderEmail,
+        customerEmail: row.email,
+        reference: row.reference,
+        pubText: orderEmailText(details),
+        customerText: customerConfirmationText(details),
+      });
+      await db.update(ordersTable).set({ emailStatus }).where(eq(ordersTable.id, id));
+      return Response.json({ order: { id, emailStatus } });
+    }
     const seen = typeof body.seen === "boolean" ? body.seen : null;
     const status = clean(body.status, 20) as OrderStatus;
     if (id === null || (seen === null && !ORDER_STATUSES.has(status))) {
@@ -314,7 +361,7 @@ export async function DELETE(request: Request) {
     }
     const id = orderId(body.id);
     if (id === null) {
-      return Response.json( { error: "The order is not valid." }, { status: 400 });
+      return Response.json({ error: "The order is not valid." }, { status: 400 });
     }
 
     const db = getDb();
@@ -324,9 +371,9 @@ export async function DELETE(request: Request) {
       .returning({ id: ordersTable.id });
 
     if (!deleted) {
-      return Response.json( { error: "Order not found." }, { status: 404 });
+      return Response.json({ error: "Order not found." }, { status: 404 });
     }
-    return Response.json( { deleted: true });
+    return Response.json({ deleted: true });
   } catch {
     return Response.json({ error: "The order could not be deleted." }, { status: 500 });
   }
@@ -535,7 +582,7 @@ export async function POST(request: Request) {
       .where(eq(ordersTable.id, savedOrder.id));
 
     return Response.json(
-      { order: { reference, totalPence, emailStatus } },
+      { order: { reference, totalPence, emailStatus: emailStatus.startsWith("failed:") ? "failed" : emailStatus } },
       { status: 201 },
     );
   } catch {
