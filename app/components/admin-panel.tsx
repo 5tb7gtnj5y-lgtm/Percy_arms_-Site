@@ -94,10 +94,6 @@ function DirectPriceInput({
   const [draft, setDraft] = useState(() => penceToPounds(valuePence));
   const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    if (!editing) setDraft(penceToPounds(valuePence));
-  }, [editing, valuePence]);
-
   return (
     <Input
       id={id}
@@ -106,8 +102,9 @@ function DirectPriceInput({
       min={min}
       max="500"
       step="0.01"
-      value={draft}
+      value={editing ? draft : penceToPounds(valuePence)}
       onFocus={(event) => {
+        setDraft(penceToPounds(valuePence));
         setEditing(true);
         event.currentTarget.select();
       }}
@@ -119,7 +116,6 @@ function DirectPriceInput({
       }}
       onBlur={() => {
         setEditing(false);
-        setDraft(penceToPounds(valuePence));
       }}
       className={className}
       required
@@ -556,38 +552,56 @@ export function AdminPanel() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-[#123c37] via-[#18564e] to-[#20766b] p-6 text-white shadow-[0_22px_58px_rgba(18,60,55,0.22)] sm:p-8">
-        <div className="pointer-events-none absolute -right-12 -top-20 size-64 rounded-full bg-[#f4c95d]/20 blur-2xl" />
-        <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+    <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10 lg:px-8">
+      <div className="gentle-rise relative overflow-hidden rounded-[2rem] bg-[#102f2a] p-6 text-white shadow-[0_26px_72px_rgba(16,47,42,0.22)] sm:p-8 lg:p-10">
+        <div className="pointer-events-none absolute -right-12 -top-20 size-72 rounded-full bg-[#d9ad5b]/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-36 left-1/3 size-72 rounded-full bg-[#6ca28f]/15 blur-3xl" />
+        <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
           <div>
-            <Badge className="bg-[#f4c95d] text-[#123c37]">Pub admin</Badge>
-            <h2 className="mt-4 font-serif text-4xl font-bold">
-              Menu, email and orders
+            <Badge className="border border-[#e7c67d]/30 bg-[#d9ad5b] px-3 py-1.5 text-[#102f2a]">Live service dashboard</Badge>
+            <h2 className="mt-5 max-w-2xl font-serif text-4xl font-bold leading-[1.02] tracking-[-0.04em] sm:text-5xl">
+              Sunday service, all in one place.
             </h2>
-            <p className="mt-3 max-w-2xl leading-7 text-[#d6f0e9]">
-              Set prices, extras and specials, then manage incoming Sunday lunch orders in one place.
+            <p className="mt-4 max-w-2xl leading-7 text-[#c9d9d3]">
+              Update the menu, control availability and keep every incoming order moving.
             </p>
           </div>
-          <div className="flex gap-3">
-            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
-              <p className="text-2xl font-black">{orders.length}</p>
-              <p className="text-xs text-[#d6f0e9]">Total orders</p>
+          <div className="flex flex-wrap items-stretch gap-3">
+            <div className="min-w-24 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 backdrop-blur">
+              <p className="text-2xl font-black tracking-tight">{orders.length}</p>
+              <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#b7cbc4]">Orders</p>
             </div>
-            <div className="rounded-2xl border border-[#f4c95d]/40 bg-[#f4c95d]/15 px-4 py-3 backdrop-blur">
-              <p className="text-2xl font-black text-[#f4c95d]">{unreadCount}</p>
-              <p className="text-xs text-[#d6f0e9]">New</p>
+            <div className="min-w-24 rounded-2xl border border-[#d9ad5b]/30 bg-[#d9ad5b]/10 px-4 py-3 backdrop-blur">
+              <p className="text-2xl font-black tracking-tight text-[#e7c67d]">{unreadCount}</p>
+              <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#b7cbc4]">New</p>
             </div>
+            <div className="min-w-24 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 backdrop-blur">
+              <p className={`text-sm font-black ${orderingOpen ? "text-[#93d5a5]" : "text-[#f2a795]"}`}>
+                {orderingOpen ? "Open" : "Paused"}
+              </p>
+              <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#b7cbc4]">Ordering</p>
+            </div>
+            <Button
+              type="submit"
+              form="menu-settings"
+              className="h-auto min-h-[4.25rem] rounded-2xl bg-[#d9ad5b] px-5 font-bold text-[#102f2a] shadow-lg shadow-black/10 hover:bg-[#e7c67d]"
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="animate-spin" /> : <Save />}
+              <span className="hidden sm:inline">Save changes</span>
+              <span className="sm:hidden">Save</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-        <form onSubmit={saveSettings} className="space-y-6">
-          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+      <div className="mt-7 grid gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:items-start">
+        <form id="menu-settings" onSubmit={saveSettings} className="space-y-6">
+          <Card className="admin-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-                <Settings2 className="text-[#df654d]" /> Main meal prices
+              <p className="section-kicker">Menu setup</p>
+              <CardTitle className="flex items-center gap-2 font-serif text-2xl tracking-[-0.02em]">
+                <Settings2 className="text-[#a35f34]" /> Main meal prices
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -610,7 +624,7 @@ export function AdminPanel() {
                       setSaved(false);
                     }}
                     onFocus={(event) => event.currentTarget.select()}
-                    className="h-12 rounded-xl pl-7"
+                    className="field-shell h-12 rounded-xl pl-7"
                     required
                   />
                 </div>
@@ -634,7 +648,7 @@ export function AdminPanel() {
                       setSaved(false);
                     }}
                     onFocus={(event) => event.currentTarget.select()}
-                    className="h-12 rounded-xl pl-7"
+                    className="field-shell h-12 rounded-xl pl-7"
                     required
                   />
                 </div>
@@ -642,18 +656,19 @@ export function AdminPanel() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+          <Card className="admin-card">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-                    <Sparkles className="text-[#df654d]" /> Specials board
+                  <p className="section-kicker">Promote this week</p>
+                  <CardTitle className="mt-1 flex items-center gap-2 font-serif text-2xl tracking-[-0.02em]">
+                    <Sparkles className="text-[#a35f34]" /> Specials board
                   </CardTitle>
                   <p className="mt-2 text-sm leading-6 text-[#60716d]">
                     Add a description and price. Customers can order each special through the normal checkout.
                   </p>
                 </div>
-                <Button type="button" variant="outline" onClick={addSpecial}>
+                <Button type="button" variant="outline" className="rounded-full" onClick={addSpecial}>
                   <Plus /> Add special
                 </Button>
               </div>
@@ -667,7 +682,7 @@ export function AdminPanel() {
               {specials.map((special, index) => (
                 <div
                   key={special.id}
-                  className="rounded-2xl border border-[#d9e6e2] bg-[#fbfdfc] p-4"
+                  className="rounded-2xl border border-[#dce2dd] bg-[#fafbf9] p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Label htmlFor={`special-text-${special.id}`} className="text-base">
@@ -707,7 +722,7 @@ export function AdminPanel() {
                         }
                         maxLength={500}
                         placeholder="For example: Homemade steak pie, chips and peas"
-                        className="min-h-28 rounded-xl bg-white"
+                        className="field-shell min-h-28 rounded-xl"
                         required
                       />
                       <p className="mt-2 text-right text-xs text-[#7c8a86]">
@@ -729,7 +744,7 @@ export function AdminPanel() {
                               pricePence,
                             })
                           }
-                          className="h-12 rounded-xl bg-white pl-7"
+                          className="field-shell h-12 rounded-xl pl-7"
                         />
                       </div>
                     </div>
@@ -739,12 +754,13 @@ export function AdminPanel() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+          <Card className="admin-card">
             <CardHeader>
-              <CardTitle className="font-serif text-2xl">Online ordering</CardTitle>
+              <p className="section-kicker">Service controls</p>
+              <CardTitle className="font-serif text-2xl tracking-[-0.02em]">Online ordering</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between gap-4 rounded-2xl bg-[#f4f8f6] p-4">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#dfe5e0] bg-[#f5f8f5] p-4">
                 <div>
                   <Label htmlFor="ordering-open" className="text-base">Accept online orders</Label>
                   <p className="mt-1 text-sm text-[#60716d]">
@@ -760,7 +776,7 @@ export function AdminPanel() {
                   }}
                 />
               </div>
-              <div className="rounded-2xl border border-[#d9e6e2] p-4">
+              <div className="rounded-2xl border border-[#dfe5e0] bg-[#fffefa] p-4">
                 <p className="font-semibold">Meat availability</p>
                 <p className="mt-1 text-sm leading-6 text-[#60716d]">
                   Switch off a sold-out meat while keeping the other choices live.
@@ -771,7 +787,7 @@ export function AdminPanel() {
                     ["Beef", "beef-available", beefAvailable, setBeefAvailable],
                     ["Pork", "pork-available", porkAvailable, setPorkAvailable],
                   ] as const).map(([label, id, available, setAvailable]) => (
-                    <div key={id} className={`flex items-center justify-between gap-3 rounded-xl px-3 py-3 ${available ? "bg-[#edf3e9]" : "bg-[#fff2ee]"}`}>
+                    <div key={id} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 ${available ? "border-[#cfe0d6] bg-[#edf4ef]" : "border-[#f0d4cc] bg-[#fff2ee]"}`}>
                       <Label htmlFor={id}>{label}</Label>
                       <Switch
                         id={id}
@@ -797,16 +813,17 @@ export function AdminPanel() {
                   }}
                   maxLength={240}
                   placeholder="For example: Beef is sold out for this Sunday."
-                  className="min-h-24 rounded-xl"
+                  className="field-shell min-h-24 rounded-xl"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+          <Card className="admin-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-                <Mail className="text-[#df654d]" /> Order email
+              <p className="section-kicker">Notifications</p>
+              <CardTitle className="flex items-center gap-2 font-serif text-2xl tracking-[-0.02em]">
+                <Mail className="text-[#a35f34]" /> Order email
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -821,7 +838,7 @@ export function AdminPanel() {
                     setSaved(false);
                   }}
                   placeholder="orders@percyarms.co.uk"
-                  className="h-12 rounded-xl"
+                  className="field-shell h-12 rounded-xl"
                   required
                 />
               </div>
@@ -842,11 +859,14 @@ export function AdminPanel() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-white shadow-[0_12px_34px_rgba(55,37,25,0.08)]">
+          <Card className="admin-card">
             <CardHeader>
               <div className="flex items-center justify-between gap-4">
-                <CardTitle className="font-serif text-2xl">Extras</CardTitle>
-                <Button type="button" variant="outline" onClick={addExtra}>
+                <div>
+                  <p className="section-kicker">Menu add-ons</p>
+                  <CardTitle className="mt-1 font-serif text-2xl tracking-[-0.02em]">Extras</CardTitle>
+                </div>
+                <Button type="button" variant="outline" className="rounded-full" onClick={addExtra}>
                   <Plus /> Add extra
                 </Button>
               </div>
@@ -855,7 +875,7 @@ export function AdminPanel() {
               {extras.map((extra) => (
                 <div
                   key={extra.id}
-                  className="grid gap-3 rounded-2xl border border-[#e7ded2] p-4 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
+                  className="grid gap-3 rounded-2xl border border-[#dfe5e0] bg-[#fafbf9] p-4 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
                 >
                   <div className="space-y-2">
                     <Label htmlFor={`extra-name-${extra.id}`}>Extra name</Label>
@@ -866,7 +886,7 @@ export function AdminPanel() {
                         changeExtra(extra.id, { name: event.target.value })
                       }
                       maxLength={80}
-                      className="h-11 rounded-xl"
+                      className="field-shell h-11 rounded-xl"
                       required
                     />
                   </div>
@@ -885,11 +905,11 @@ export function AdminPanel() {
                             pricePence,
                           })
                         }
-                        className="h-11 rounded-xl pl-7"
+                        className="field-shell h-11 rounded-xl pl-7"
                       />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[#faf7f1] px-3 py-3 sm:justify-start">
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-[#e1e5e0] bg-white px-3 py-3 sm:justify-start">
                     <Label htmlFor={`extra-active-${extra.id}`}>Show</Label>
                     <Switch
                       id={`extra-active-${extra.id}`}
@@ -919,7 +939,7 @@ export function AdminPanel() {
           )}
           <Button
             type="submit"
-            className="h-13 w-full rounded-xl bg-[#123c37] text-base font-bold shadow-lg shadow-[#123c37]/15 hover:bg-[#1d5a52]"
+            className="h-13 w-full rounded-xl bg-[#153f38] text-base font-bold shadow-lg shadow-[#153f38]/15 hover:bg-[#235c52]"
             disabled={saving}
           >
             {saving ? (
@@ -937,10 +957,10 @@ export function AdminPanel() {
         <div className="lg:sticky lg:top-24">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#df654d]">
+              <p className="section-kicker">
                 Admin inbox
               </p>
-              <h3 className="mt-2 font-serif text-3xl font-bold">Orders</h3>
+              <h3 className="mt-2 font-serif text-3xl font-bold tracking-[-0.03em]">Orders</h3>
             </div>
             <div className="flex items-center gap-2">
               {notificationPermission !== "granted" && notificationPermission !== "unsupported" && (
@@ -948,7 +968,7 @@ export function AdminPanel() {
                   <Bell /> Enable alerts
                 </Button>
               )}
-              <Badge className="bg-[#123c37] text-white">{unreadCount} new</Badge>
+              <Badge className="bg-[#153f38] text-white">{unreadCount} new</Badge>
             </div>
           </div>
 
@@ -990,11 +1010,11 @@ export function AdminPanel() {
                 value={orderSearch}
                 onChange={(event) => setOrderSearch(event.target.value)}
                 placeholder="Search customer, phone or reference"
-                className="h-10 rounded-xl bg-white pl-9"
+                className="field-shell h-10 rounded-xl pl-9"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 w-full rounded-xl bg-white">
+              <SelectTrigger className="field-shell h-10 w-full rounded-xl">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -1010,8 +1030,8 @@ export function AdminPanel() {
           </div>
 
           {filteredOrders.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#cdbfae] bg-white/55 p-9 text-center">
-              <ReceiptText className="mx-auto size-10 text-[#df654d]" />
+            <div className="surface-card rounded-2xl border-dashed p-9 text-center">
+              <ReceiptText className="mx-auto size-10 text-[#a35f34]" />
               <p className="mt-4 font-semibold">{orders.length === 0 ? "No orders yet" : "No matching orders"}</p>
               <p className="mt-2 text-sm text-[#6e625a]">
                 {orders.length === 0 ? "New orders will appear here immediately." : "Try a different search or status filter."}
@@ -1022,7 +1042,7 @@ export function AdminPanel() {
               {filteredOrders.map((order) => (
                 <Card
                   key={order.id}
-                  className={`gap-4 overflow-hidden py-5 shadow-[0_12px_34px_rgba(18,60,55,0.08)] ${order.seenAt ? "border-[#d5e4df] bg-white" : "border-[#ef6a52] bg-[#fffdfb] ring-2 ring-[#ef6a52]/10"}`}
+                  className={`order-card gap-4 overflow-hidden rounded-2xl py-5 shadow-[0_14px_38px_rgba(18,60,55,0.07)] ${order.seenAt ? "border-[#d9ded9] bg-white" : "border-[#b77746] bg-[#fffdfa] ring-2 ring-[#b77746]/10"}`}
                 >
                   <CardHeader className="gap-3 px-5">
                     <div className="flex items-start justify-between gap-4">
@@ -1031,7 +1051,7 @@ export function AdminPanel() {
                           <p className="font-mono text-sm font-black tracking-wider text-[#123c37]">
                           {order.reference}
                           </p>
-                          {!order.seenAt && <Badge className="bg-[#ef6a52] text-white">New</Badge>}
+                          {!order.seenAt && <Badge className="bg-[#a35f34] text-white">New</Badge>}
                         </div>
                         <CardTitle className="mt-2 font-serif text-2xl">
                           {order.customerName}
@@ -1130,7 +1150,7 @@ export function AdminPanel() {
                         type="button"
                         size="sm"
                         variant={order.seenAt ? "outline" : "default"}
-                        className={order.seenAt ? "rounded-full" : "rounded-full bg-[#123c37] hover:bg-[#1d5a52]"}
+                        className={order.seenAt ? "rounded-full" : "rounded-full bg-[#153f38] hover:bg-[#235c52]"}
                         disabled={busyOrderId === order.id}
                         onClick={() => setSeen(order, !order.seenAt)}
                       >
