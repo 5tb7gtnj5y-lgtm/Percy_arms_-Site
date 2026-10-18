@@ -331,6 +331,27 @@ export function AdminPanel() {
     }
   }
 
+  async function retryOrderEmails(order: AdminOrder) {
+    setBusyOrderId(order.id);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: order.id, retryEmails: true }),
+      });
+      const result = await response.json() as { order?: { emailStatus: string }; error?: string };
+      if (!response.ok || !result.order) throw new Error(result.error || "Email retry failed.");
+      const emailStatus = result.order.emailStatus;
+      setOrders((current) => current.map((item) => item.id === order.id ? { ...item, emailStatus } : item));
+      if (emailStatus === "sent") toast.success("The email provider accepted the pub and customer emails. Check the customer inbox.");
+      else toast.error(emailStatus.startsWith("failed:") ? emailStatus.slice(8) : "Email setup is incomplete. Check RESEND_API_KEY and RESEND_FROM_EMAIL in Cloudflare.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Email retry failed.");
+    } finally {
+      setBusyOrderId(null);
+    }
+  }
+
   async function deleteOrder(order: AdminOrder) {
     setBusyOrderId(order.id);
     try {
@@ -1071,7 +1092,7 @@ export function AdminPanel() {
                         }
                       >
                         {order.emailStatus === "sent"
-                          ? "Email sent"
+                          ? "Emails accepted by provider"
                           : order.emailStatus === "awaiting_setup"
                             ? "Saved · email setup needed"
                             : "Saved · email failed"}
@@ -1082,6 +1103,20 @@ export function AdminPanel() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 px-5 text-sm">
+                    {order.emailStatus !== "sent" && (
+                      <div className="space-y-2 rounded-xl bg-amber-50 p-3 text-amber-950">
+                        <p role="status">
+                          {order.emailStatus.startsWith("failed:")
+                            ? order.emailStatus.slice(8)
+                            : order.emailStatus === "awaiting_setup"
+                              ? "Email setup is incomplete. Add RESEND_API_KEY and a verified RESEND_FROM_EMAIL in Cloudflare."
+                              : "The email provider did not confirm that both emails were accepted. Retry to see the reason."}
+                        </p>
+                        <Button type="button" variant="outline" disabled={busyOrderId === order.id} onClick={() => retryOrderEmails(order)}>
+                          <Mail /> {busyOrderId === order.id ? "Retrying…" : "Retry order emails"}
+                        </Button>
+                      </div>
+                    )}
                     {order.lines.meals.map((meal) => (
                       <div
                         key={meal.id}
