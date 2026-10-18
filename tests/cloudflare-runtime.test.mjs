@@ -28,6 +28,8 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
   const jwk = { ...await exportJWK(publicKey), kid: "runtime-test", alg: "RS256" };
   const team = "https://percy-test.cloudflareaccess.com";
   const audience = "local-test-audience";
+  const sentEmails = [];
+  let customerEmailFailure = null;
   const jwt = await new SignJWT({ email: "admin@example.com", type: "app" })
     .setProtectedHeader({ alg: "RS256", kid: "runtime-test" })
     .setIssuer(team).setAudience(audience).setSubject("test-staff")
@@ -39,15 +41,31 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     compatibilityDate: config.compatibility_date,
     compatibilityFlags: config.compatibility_flags,
     d1Databases: ["DB"],
-    bindings: { TEAM_DOMAIN: team, POLICY_AUD: audience, ADMIN_EMAIL: "admin@example.com" },
+    bindings: {
+      TEAM_DOMAIN: team,
+      POLICY_AUD: audience,
+      ADMIN_EMAIL: "admin@example.com",
+      RESEND_API_KEY: "re_test_key",
+      RESEND_FROM_EMAIL: "The Percy Arms <orders@pub.example>",
+    },
     assets: {
       directory: path.join(root, "dist/client"),
       workerName: config.name,
       routerConfig: { has_user_worker: true },
     },
     outboundService: async (request) => {
-      assert.equal(request.url, `${team}/cdn-cgi/access/certs`, "No external order emails or other network requests in tests");
-      return Response.json({ keys: [jwk] });
+      if (request.url === `${team}/cdn-cgi/access/certs`) {
+        return Response.json({ keys: [jwk] });
+      }
+      assert.equal(request.url, "https://api.resend.com/emails");
+      const email = await request.json();
+      sentEmails.push(email);
+      if (email.to.includes("customer@example.com") && customerEmailFailure) {
+        const failure = customerEmailFailure;
+        if (failure.once) customerEmailFailure = null;
+        return Response.json({ message: failure.message }, { status: failure.status });
+      }
+      return Response.json({ id: `test-email-${sentEmails.length}` });
     },
   });
   t.after(() => mf.dispose());
@@ -144,7 +162,7 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     assert.equal(response.status, 200, await response.clone().text());
     settings = await response.json();
     assert.equal(settings.configured, true);
-    assert.equal(settings.emailServiceReady, false);
+    assert.equal(settings.emailServiceReady, true);
     assert.equal(settings.specials.length, 2);
     const publicMenu = await request("/api/menu");
     assert.equal(publicMenu.status, 200);
@@ -166,11 +184,25 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     meals: [{ mealType: "adult", meat: "chicken", quantity: 1 }], specials: [], extras: [],
   };
   await t.test("an order is stored locally; seen-order clearing preserves unseen orders", async () => {
+    const emailStart = sentEmails.length;
+    let firstOrder;
     for (let i = 0; i < 2; i++) {
       const response = await request("/api/orders", { method: "POST", body: JSON.stringify(order) });
       assert.equal(response.status, 201, await response.clone().text());
-      assert.equal((await response.json()).order.emailStatus, "awaiting_setup");
+      const result = await response.json();
+      firstOrder ??= result.order;
+      assert.equal(result.order.emailStatus, "sent");
     }
+    assert.equal(sentEmails.length - emailStart, 4, "each order emails the pub and customer");
+    const [pubEmail, customerEmail] = sentEmails.slice(emailStart, emailStart + 2);
+    assert.deepEqual(pubEmail.to, ["orders@example.com"]);
+    assert.equal(pubEmail.reply_to, "customer@example.com");
+    assert.match(pubEmail.subject, new RegExp(firstOrder.reference));
+    assert.deepEqual(customerEmail.to, ["customer@example.com"]);
+    assert.equal(customerEmail.reply_to, "orders@example.com");
+    assert.match(customerEmail.subject, /is confirmed$/);
+    assert.match(customerEmail.text, new RegExp(firstOrder.reference));
+    assert.match(customerEmail.text, /TOTAL TO PAY AT THE PUB: £12\.95/);
     const response = await request("/api/orders", {}, true);
     assert.equal(response.status, 200);
     const { orders } = await response.json();
@@ -183,6 +215,36 @@ test("built Cloudflare Worker: public menu, protected admin and stored orders", 
     assert.equal((await cleared.json()).count, 1);
     const remaining = await request("/api/orders", {}, true);
     assert.equal((await remaining.json()).orders.length, 1);
+  });
+
+  await t.test("customer rejection is visible only to staff and can be retried without creating an order", async () => {
+    customerEmailFailure = { status: 403, message: "You can only send testing emails to your own email address." };
+    const response = await request("/api/orders", { method: "POST", body: JSON.stringify(order) });
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).order.emailStatus, "failed");
+    const { orders } = await (await request("/api/orders", {}, true)).json();
+    const failed = orders.find((item) => item.emailStatus.startsWith("failed:"));
+    assert.match(failed.emailStatus, /Customer:.*verified sending domain/);
+    const count = orders.length;
+    const denied = await request("/api/orders", { method: "PATCH", body: JSON.stringify({ id: failed.id, retryEmails: true }) });
+    assert.equal(denied.status, 403);
+    await denied.text();
+    customerEmailFailure = null;
+    const retried = await request("/api/orders", { method: "PATCH", body: JSON.stringify({ id: failed.id, retryEmails: true }) }, true);
+    assert.equal((await retried.json()).order.emailStatus, "sent");
+    const after = await (await request("/api/orders", {}, true)).json();
+    assert.equal(after.orders.length, count);
+    assert.equal(after.orders.find((item) => item.id === failed.id).emailStatus, "sent");
+    const emailCount = sentEmails.length;
+    await (await request("/api/orders", { method: "PATCH", body: JSON.stringify({ id: failed.id, retryEmails: true }) }, true)).text();
+    assert.equal(sentEmails.length, emailCount, "a successful order is not emailed again");
+  });
+
+  await t.test("temporary customer email rate limits are retried automatically", async () => {
+    customerEmailFailure = { status: 429, message: "Rate limit exceeded", once: true };
+    const response = await request("/api/orders", { method: "POST", body: JSON.stringify(order) });
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).order.emailStatus, "sent");
   });
 
   await t.test("a priced special follows the normal checkout without requiring a roast", async () => {
