@@ -108,11 +108,91 @@ function orderEmailText(args: {
   ].join("\n");
 }
 
-async function sendOrderEmail(args: {
-  to: string;
+function customerConfirmationText(args: {
   reference: string;
-  customerEmail: string;
+  service: ServiceType;
+  mealDate: string;
+  timeSlot: string;
+  customerName: string;
+  lines: OrderLines;
+  totalPence: number;
+}) {
+  const mealLines = args.lines.meals.map(
+    (item) =>
+      `${item.quantity} x ${item.name} — ${item.meat} — ${formatMoney(item.unitPricePence * item.quantity)}`,
+  );
+  const specialLines = args.lines.specials.map(
+    (item) =>
+      `${item.quantity} x ${item.name} — ${formatMoney(item.unitPricePence * item.quantity)}`,
+  );
+  const extraLines = args.lines.extras.map(
+    (item) =>
+      `${item.quantity} x ${item.name} — ${formatMoney(item.unitPricePence * item.quantity)}`,
+  );
+
+  return [
+    `Hi ${args.customerName},`,
+    "",
+    "Thanks for ordering from The Percy Arms. Your Sunday lunch order has been received.",
+    "",
+    `Order reference: ${args.reference}`,
+    `Service: ${args.service === "dine_in" ? "Dine in" : "Takeaway collection"}`,
+    `Date: ${args.mealDate}`,
+    `Time: ${args.timeSlot}`,
+    "",
+    "YOUR ORDER",
+    ...mealLines,
+    ...specialLines,
+    ...extraLines,
+    "",
+    `TOTAL TO PAY AT THE PUB: ${formatMoney(args.totalPence)}`,
+    "",
+    "Please keep this email and quote your order reference if you need to contact the pub about your order.",
+    "If you have any allergy or dietary requirements, please speak to the team before your meal.",
+    "",
+    "The Percy Arms",
+    "Blyth, Northumberland",
+  ].join("\n");
+}
+
+async function sendEmail(args: {
+  apiKey: string;
+  from: string;
+  to: string;
+  replyTo: string;
+  subject: string;
   text: string;
+  idempotencyKey: string;
+}) {
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${args.apiKey}`,
+        "content-type": "application/json",
+        "idempotency-key": args.idempotencyKey,
+      },
+      body: JSON.stringify({
+        from: args.from,
+        to: [args.to],
+        reply_to: args.replyTo,
+        subject: args.subject,
+        text: args.text,
+      }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function sendOrderEmails(args: {
+  pubEmail: string;
+  customerEmail: string;
+  reference: string;
+  pubText: string;
+  customerText: string;
 }) {
   const runtimeEnv = env as unknown as {
     RESEND_API_KEY?: string;
@@ -123,27 +203,26 @@ async function sendOrderEmail(args: {
     return "awaiting_setup" as const;
   }
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${runtimeEnv.RESEND_API_KEY}`,
-        "content-type": "application/json",
-        "idempotency-key": args.reference,
-      },
-      body: JSON.stringify({
-        from: runtimeEnv.RESEND_FROM_EMAIL,
-        to: [args.to],
-        reply_to: args.customerEmail,
-        subject: `Percy Arms order ${args.reference}`,
-        text: args.text,
-      }),
-    });
+  const pubSent = await sendEmail({
+    apiKey: runtimeEnv.RESEND_API_KEY,
+    from: runtimeEnv.RESEND_FROM_EMAIL,
+    to: args.pubEmail,
+    replyTo: args.customerEmail,
+    subject: `Percy Arms order ${args.reference}`,
+    text: args.pubText,
+    idempotencyKey: `${args.reference}-pub-order`,
+  });
+  const customerSent = await sendEmail({
+    apiKey: runtimeEnv.RESEND_API_KEY,
+    from: runtimeEnv.RESEND_FROM_EMAIL,
+    to: args.customerEmail,
+    replyTo: args.pubEmail,
+    subject: `Your Percy Arms order ${args.reference} is confirmed`,
+    text: args.customerText,
+    idempotencyKey: `${args.reference}-customer-confirmation`,
+  });
 
-    return response.ok ? ("sent" as const) : ("failed" as const);
-  } catch {
-    return "failed" as const;
-  }
+  return pubSent && customerSent ? ("sent" as const) : ("failed" as const);
 }
 
 export async function GET(request: Request) {
@@ -235,7 +314,7 @@ export async function DELETE(request: Request) {
     }
     const id = orderId(body.id);
     if (id === null) {
-      return Response.json({ error: "The order is not valid." }, { status: 400 });
+      return Response.json( { error: "The order is not valid." }, { status: 400 });
     }
 
     const db = getDb();
@@ -245,9 +324,9 @@ export async function DELETE(request: Request) {
       .returning({ id: ordersTable.id });
 
     if (!deleted) {
-      return Response.json({ error: "Order not found." }, { status: 404 });
+      return Response.json( { error: "Order not found." }, { status: 404 });
     }
-    return Response.json({ deleted: true });
+    return Response.json( { deleted: true });
   } catch {
     return Response.json({ error: "The order could not be deleted." }, { status: 500 });
   }
@@ -430,7 +509,7 @@ export async function POST(request: Request) {
       })
       .returning({ id: ordersTable.id });
 
-    const text = orderEmailText({
+    const emailDetails = {
       reference,
       service,
       mealDate,
@@ -441,12 +520,13 @@ export async function POST(request: Request) {
       notes,
       lines,
       totalPence,
-    });
-    const emailStatus = await sendOrderEmail({
-      to: config.orderEmail,
+    };
+    const emailStatus = await sendOrderEmails({
+      pubEmail: config.orderEmail,
       reference,
       customerEmail: email,
-      text,
+      pubText: orderEmailText(emailDetails),
+      customerText: customerConfirmationText(emailDetails),
     });
 
     await db
